@@ -1,0 +1,13 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'; import {sitePath} from '../lib/urls';
+---
+<BaseLayout title="搜索" description="搜索技术文章与生活日志" noindex>
+  <section class="hero"><p class="eyebrow">Search</p><h1>中文搜索</h1><label for="search-input">搜索标题、摘要、分类或标签</label><input class="search-input" id="search-input" type="search" autocomplete="off" placeholder="例如：Astro、性能、散步" /></section>
+  <p id="search-status" class="muted" role="status" aria-live="polite">输入关键词开始搜索。</p><div id="search-results" class="grid"></div>
+  <script is:inline define:vars={{ indexUrl: sitePath('/search-index.json') }}>
+    const input = document.querySelector('#search-input'); const results = document.querySelector('#search-results'); const status = document.querySelector('#search-status'); let items=[];
+    const normalize=value=>value.normalize('NFKC').toLocaleLowerCase('zh-CN').replace(/\s+/g,'');
+    fetch(indexUrl).then(r=>r.json()).then(data=>{items=data;}).catch(()=>{status.textContent='搜索索引暂时无法加载。';});
+    input?.addEventListener('input',()=>{const query=normalize(input.value);results.replaceChildren();if(!query){status.textContent='输入关键词开始搜索。';return;}const matched=items.filter(item=>normalize([item.title,item.description,item.category,...item.tags].join(' ')).includes(query));status.textContent=matched.length?`找到 ${matched.length} 条结果。`:'没有找到匹配内容。';for(const item of matched){const article=document.createElement('article');article.className='card';const h=document.createElement('h2');const a=document.createElement('a');a.className='card-link';a.href=item.url;a.textContent=item.title;h.append(a);const p=document.createElement('p');p.textContent=item.description;article.append(h,p);results.append(article);}});
+  </script>
+</BaseLayout>

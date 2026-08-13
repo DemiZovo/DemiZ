@@ -1,0 +1,9 @@
+node_modules/
+.astro/
+dist/
+.pnpm-store/
+.preview.*.log
+.env
+.env.*
+!.env.example
+

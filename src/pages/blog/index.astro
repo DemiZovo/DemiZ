@@ -1,0 +1,7 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { entryPath, getPublicBlog } from '../../lib/content';
+import { sitePath } from '../../lib/urls';
+const posts = await getPublicBlog();
+---
+<BaseLayout title="技术博客"><section class="hero"><p class="eyebrow">Blog</p><h1>技术博客</h1><p>记录工程实践、设计取舍和问题复盘。</p></section><div class="grid">{posts.map(post => <article class="card"><p class="meta">{post.data.published.toLocaleDateString('zh-CN')} · {post.data.category}</p><h2><a class="card-link" href={sitePath(entryPath(post))}>{post.data.title}</a></h2><p>{post.data.description}</p><ul class="tags">{post.data.tags.map(tag => <li><a class="tag" href={sitePath(`/tags/${encodeURIComponent(tag)}/`)}>{tag}</a></li>)}</ul></article>)}</div></BaseLayout>

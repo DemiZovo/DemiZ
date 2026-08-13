@@ -1,0 +1,4 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro'; import { entryPath,getPublicLife } from '../../lib/content'; import { sitePath } from '../../lib/urls'; const entries=await getPublicLife();
+---
+<BaseLayout title="生活日志"><section class="hero"><p class="eyebrow">Life</p><h1>生活日志</h1><p>技术之外，也保留真实而缓慢的日常。</p></section><div class="grid">{entries.map(entry=><article class="card"><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p><h2><a class="card-link" href={sitePath(entryPath(entry))}>{entry.data.title}</a></h2><p>{entry.data.description}</p></article>)}</div></BaseLayout>

@@ -1,0 +1,14 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublicLife } from '../../lib/content';
+import { sitePath } from '../../lib/urls';
+export async function getStaticPaths() {
+  return (await getPublicLife()).map(entry => ({ params: { slug: entry.data.slug }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+<BaseLayout title={`${entry.data.title} | 生活日志`} description={entry.data.description} image={entry.data.cover} type="article">
+  <article class="article"><a href={sitePath('/life/')}>← 返回生活日志</a><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p><Content /></article>
+</BaseLayout>

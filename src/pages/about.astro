@@ -1,0 +1,16 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config/site';
+---
+<BaseLayout title={`关于我 | ${siteConfig.name}`}>
+  <article class="article">
+    <p class="eyebrow">About</p>
+    <h1>关于我</h1>
+    <div class="avatar-placeholder avatar-large" role="img" aria-label="DemiZ 的纯白头像占位"></div>
+    <p>你好，我是 {siteConfig.author.name}。个人简介将在之后补充。</p>
+    <h2>这里记录什么</h2>
+    <p>这里用于整理代码学习笔记，也保存技术之外的日常记录。</p>
+    <h2>联系</h2>
+    <p><a href={siteConfig.author.github}>GitHub</a> · <a href={`mailto:${siteConfig.author.email}`}>{siteConfig.author.email}</a></p>
+  </article>
+</BaseLayout>

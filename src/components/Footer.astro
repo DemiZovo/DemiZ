@@ -1,0 +1,8 @@
+---
+import { siteConfig } from '../config/site';
+import { sitePath } from '../lib/urls';
+---
+<footer class="site-footer">
+  <p>© {new Date().getFullYear()} {siteConfig.author.name}</p>
+  <nav aria-label="页脚导航"><a href={sitePath('/privacy/')}>隐私说明</a><a href={sitePath('/rss.xml')}>RSS</a></nav>
+</footer>

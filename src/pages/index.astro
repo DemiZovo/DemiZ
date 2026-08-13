@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { entryPath, getPublicContent } from '../lib/content';
+import { siteConfig } from '../config/site';
+import { sitePath } from '../lib/urls';
+const entries = (await getPublicContent()).slice(0, 6);
+---
+<BaseLayout>
+  <section class="hero hero-profile">
+    <div class="avatar-placeholder" role="img" aria-label="DemiZ 的纯白头像占位"></div>
+    <div>
+      <p class="eyebrow">程序员 · 学习者 · 生活记录者</p>
+      <h1>{siteConfig.name}</h1>
+      <p>{siteConfig.description}</p>
+      <p><a href={siteConfig.author.github}>GitHub</a> · <a href={sitePath('/blog/')}>阅读技术文章</a></p>
+    </div>
+  </section>
+  <section aria-labelledby="recent">
+    <h2 id="recent">最近更新</h2>
+    <div class="grid">{entries.map(entry => <article class="card">
+      <p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p>
+      <h3><a class="card-link" href={sitePath(entryPath(entry))}>{entry.data.title}</a></h3>
+      <p>{entry.data.description}</p>
+      <ul class="tags">{entry.data.tags.map(tag => <li><a class="tag" href={sitePath(`/tags/${encodeURIComponent(tag)}/`)}>{tag}</a></li>)}</ul>
+    </article>)}</div>
+  </section>
+</BaseLayout>

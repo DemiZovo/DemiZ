@@ -1,0 +1,4 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'; import {siteConfig} from '../config/site';
+---
+<BaseLayout title={`隐私说明 | ${siteConfig.name}`}><article class="article"><h1>隐私说明</h1><p class="meta">最后更新：2026 年 8 月 13 日</p><h2>访问统计</h2><p>本站仅在正式部署、且完成统计配置时加载 Umami。统计用于了解页面整体使用情况，不用于建立跨站个人画像。</p><p>浏览器开启 Do Not Track 或 Global Privacy Control 时，本站不会请求统计脚本。统计功能不可用也不会影响内容访问。</p><h2>数据范围</h2><p>可能处理页面访问量、来源页面、浏览器和设备类型以及国家或地区级别的粗略位置。本站不主动收集姓名、表单内容或精确位置，也不使用统计 Cookie 或 localStorage 保存统计身份。</p><h2>第三方托管</h2><p>网站由 GitHub Pages 托管，其基础设施可能按照自身政策处理提供服务所需的网络日志。统计服务启用前，站点维护者应在此补充实际托管地区和数据保留期限。</p><h2>联系</h2><p>如有隐私问题，请联系 <a href={`mailto:${siteConfig.author.email}`}>{siteConfig.author.email}</a>。</p></article></BaseLayout>

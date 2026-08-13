@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { entryPath, getPublicContent } from '../../lib/content';
+import { sitePath } from '../../lib/urls';
+export async function getStaticPaths() {
+  const entries = await getPublicContent();
+  const tags = [...new Set(entries.flatMap(entry => entry.data.tags))];
+  return tags.map(tag => ({ params: { tag }, props: { tag, entries: entries.filter(entry => entry.data.tags.includes(tag)) } }));
+}
+const { tag, entries } = Astro.props;
+---
+<BaseLayout title={`标签：${tag}`}><section class="hero"><p class="eyebrow">Tag</p><h1>标签：{tag}</h1></section><ul class="list-clean">{entries.map(entry => <li><a href={sitePath(entryPath(entry))}>{entry.data.title}</a> <span class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</span></li>)}</ul></BaseLayout>

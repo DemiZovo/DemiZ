@@ -1,0 +1,19 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPublicBlog } from '../../lib/content';
+import { sitePath } from '../../lib/urls';
+export async function getStaticPaths() {
+  return (await getPublicBlog()).map(entry => ({ params: { slug: entry.data.slug }, props: { entry } }));
+}
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+---
+<BaseLayout title={`${entry.data.title} | 技术博客`} description={entry.data.description} image={entry.data.cover} type="article">
+  <article class="article">
+    <p><a href={sitePath('/blog/')}>← 返回技术博客</a></p>
+    <header><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')} · {entry.data.category}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
+    {entry.data.toc && headings.length > 0 && <nav class="toc" aria-label="文章目录"><strong>目录</strong><ul>{headings.map(h => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul></nav>}
+    <Content />
+  </article>
+</BaseLayout>
