@@ -1,9 +1,9 @@
-# DemiZovo 个人网站
+# DemiZ 个人网站
 
 DemiZ 的个人网站，用于整理代码学习笔记、展示项目和记录生活。
 
-- 正式网站：<https://demizovo.github.io/My-website/>
-- GitHub 仓库：<https://github.com/DemiZovo/My-website>
+- 正式网站：<https://demizovo.github.io/DemiZ/>
+- GitHub 仓库：<https://github.com/DemiZovo/DemiZ>
 - 技术栈：Astro、TypeScript、Markdown、GitHub Pages
 
 ## 目录
@@ -13,9 +13,12 @@ DemiZ 的个人网站，用于整理代码学习笔记、展示项目和记录�
 - [添加技术博客](#添加技术博客)
 - [修改、隐藏或删除博客](#修改隐藏或删除博客)
 - [添加生活日志](#添加生活日志)
+- [使用标签](#使用标签)
+- [使用时间归档](#使用时间归档)
+- [使用站内搜索](#使用站内搜索)
 - [插入图片](#插入图片)
 - [更换头像](#更换头像)
-- [修改个人资料](#修改个人资料)
+- [修改关于我与个人资料](#修改关于我与个人资料)
 - [展示 GitHub 项目](#展示-github-项目)
 - [检查并发布](#检查并发布)
 - [访问统计](#访问统计)
@@ -80,6 +83,7 @@ tags: [JavaScript, 前端]
 draft: false
 featured: false
 toc: true
+updated: 2026-08-15
 ---
 
 这里写文章正文。
@@ -98,24 +102,24 @@ console.log(message);
 
 字段说明：
 
-| 字段 | 必填 | 说明 |
-|---|---:|---|
-| `title` | 是 | 文章标题，最多 100 个字符 |
-| `description` | 是 | 文章摘要，最多 240 个字符 |
-| `slug` | 是 | 文章网址，只能使用英文小写、数字和连字符 |
-| `published` | 是 | 发布日期，格式为 `YYYY-MM-DD` |
-| `updated` | 否 | 更新日期，不能早于发布日期 |
-| `category` | 是 | 文章分类 |
-| `tags` | 否 | 标签列表，例如 `[Astro, TypeScript]` |
-| `cover` | 否 | 封面图片的站内路径 |
-| `draft` | 否 | `true` 为草稿，正式构建不会发布 |
-| `featured` | 否 | 是否标记为精选内容 |
-| `toc` | 否 | 是否显示文章目录 |
+| 字段            | 必填  | 说明                            |
+| ------------- | ---:| ----------------------------- |
+| `title`       | 是   | 文章标题，最多 100 个字符               |
+| `description` | 是   | 文章摘要，最多 240 个字符               |
+| `slug`        | 是   | 文章网址，只能使用英文小写、数字和连字符          |
+| `published`   | 是   | 发布日期，格式为 `YYYY-MM-DD`         |
+| `updated`     | 否   | 更新日期，不能早于发布日期                 |
+| `category`    | 是   | 文章分类                          |
+| `tags`        | 否   | 标签列表，例如 `[Astro, TypeScript]` |
+| `cover`       | 否   | 封面图片的站内路径                     |
+| `draft`       | 否   | `true` 为草稿，正式构建不会发布           |
+| `featured`    | 否   | 是否标记为精选内容                     |
+| `toc`         | 否   | 是否显示文章目录                      |
 
 发布后的地址为：
 
 ```text
-https://demizovo.github.io/My-website/blog/learning-javascript/
+https://demizovo.github.io/DemiZ/blog/learning-javascript/
 ```
 
 文件名可以与 `slug` 相同，方便管理。文章发布后尽量不要修改 `slug`，否则原地址会失效。
@@ -177,6 +181,140 @@ featured: false
 
 修改、隐藏和删除生活日志的方法与技术博客相同。
 
+## 使用标签
+
+标签页面不需要手工创建。网站会读取所有已发布技术博客和生活日志的 `tags` 字段，自动完成以下工作：
+
+- 在文章卡片中显示标签。
+- 在 `/tags/` 页面汇总全部标签及其文章数量。
+- 为每个标签生成独立页面，例如 `/tags/Astro/`。
+- 在标签详情页列出使用该标签的全部公开内容。
+
+### 新增标签
+
+在文章头部的 `tags` 数组中直接增加标签：
+
+```yaml
+tags: [JavaScript, 前端, 学习笔记]
+```
+
+保存并重新构建后，新增标签会自动出现在标签页，不需要修改页面代码。
+
+单个标签也可以这样填写：
+
+```yaml
+tags: [JavaScript]
+```
+
+不使用标签时可以填写：
+
+```yaml
+tags: []
+```
+
+### 修改或删除标签
+
+修改文章头部的 `tags` 即可：
+
+```yaml
+# 修改前
+tags: [JS, Web]
+
+# 修改后
+tags: [JavaScript, 前端]
+```
+
+如果某个标签不再被任何公开内容使用，该标签及其详情页会在下一次构建时自动消失。
+
+标签名称区分不同写法。`JavaScript`、`javascript` 和 `JS` 会被视为三个标签，因此建议统一命名。标签可以使用中文、英文和空格，但同一主题应始终采用相同写法。
+
+设置为 `draft: true` 的内容不会计入正式网站的标签数量，也不会出现在标签详情页。
+
+相关实现文件：
+
+```text
+src/pages/tags/index.astro
+src/pages/tags/[tag].astro
+```
+
+## 使用时间归档
+
+归档页面位于：
+
+```text
+https://demizovo.github.io/DemiZ/archives/
+```
+
+归档同样自动生成，不需要创建归档文件或手工添加链接。网站读取技术博客和生活日志的 `published` 日期，然后：
+
+1. 按发布日期从新到旧排序。
+2. 按年份分组。
+3. 显示发布日期、文章标题和详情链接。
+4. 自动排除正式构建中的草稿。
+
+例如：
+
+```yaml
+published: 2026-08-14
+```
+
+这篇内容会自动进入归档页的 `2026` 分组。若修改 `published`，它会在下一次构建后移动到对应年份和排序位置。
+
+`updated` 只表示文章最后更新时间，不影响归档分组；归档始终以 `published` 为准。
+
+相关实现文件：
+
+```text
+src/pages/archives.astro
+src/lib/content.ts
+```
+
+## 使用站内搜索
+
+搜索页面位于：
+
+```text
+https://demizovo.github.io/DemiZ/search/
+```
+
+构建时，网站会把所有公开技术博客和生活日志写入 `/search-index.json`。当前索引字段包括：
+
+- 标题 `title`
+- 摘要 `description`
+- 博客分类 `category`；生活日志统一归类为“生活”
+- 标签 `tags`
+- 发布日期和文章地址（用于显示与跳转）
+
+当前搜索是浏览器端的实时子串匹配，规则如下：
+
+1. 输入时立即搜索，不需要按 Enter。
+2. 中文和英文都支持。
+3. 英文字母不区分大小写。
+4. 查询和索引文本会进行 Unicode NFKC 标准化。
+5. 空格会被移除，因此 `GitHub Pages` 和 `GitHubPages` 可以相互匹配。
+6. 关键词只要连续出现在标题、摘要、分类或标签中，即视为匹配。
+7. 草稿不会进入正式搜索索引。
+
+例如，文章信息为：
+
+```yaml
+title: JavaScript 学习笔记
+description: 记录前端基础知识。
+category: JavaScript
+tags: [JavaScript, 前端]
+```
+
+搜索“JavaScript”“javascript”“前端”“基础知识”都可以找到它。
+
+当前搜索不会检索 Markdown 正文内容，也没有模糊纠错、拼音搜索或多关键词分词逻辑。如果希望某个关键词可以被搜索到，应将其写入标题、摘要、分类或标签。
+
+相关实现文件：
+
+```text
+src/pages/search.astro
+src/pages/search-index.json.ts
+```
+
 ## 插入图片
 
 静态图片统一放在 `public/images/` 中，建议按用途分类：
@@ -201,7 +339,7 @@ public/images/profile/
 cover: /images/blog/learning-javascript/cover.webp
 ```
 
-图片路径需要以 `/images/` 开头。项目构建时会自动处理 GitHub Pages 的 `/My-website` 子路径。
+图片路径需要以 `/images/` 开头。项目构建时会自动处理 GitHub Pages 的 `/DemiZ` 子路径。
 
 ## 更换头像
 
@@ -272,7 +410,7 @@ import { sitePath } from '../lib/urls';
 }
 ```
 
-## 修改个人资料
+## 修改关于我与个人资料
 
 站点基础信息位于：
 
@@ -283,9 +421,9 @@ src/config/site.ts
 可以修改：
 
 ```ts
-name: 'DemiZovo',
+name: 'DemiZ',
 description: 'DemiZ 的代码学习与生活记录。',
-url: 'https://demizovo.github.io/My-website',
+url: 'https://demizovo.github.io/DemiZ',
 author: {
   name: 'DemiZ',
   bio: '',
@@ -299,6 +437,57 @@ author: {
 ```text
 src/pages/about.astro
 ```
+
+### 修改“关于我”正文
+
+打开 `src/pages/about.astro`。页面正文使用普通 Astro/HTML 标签，可以直接修改。例如：
+
+```astro
+<article class="article">
+  <p class="eyebrow">About</p>
+  <h1>关于我</h1>
+
+  <p>你好，我是 {siteConfig.author.name}，目前正在学习前端开发。</p>
+
+  <h2>我在学习什么</h2>
+  <p>这里填写正在学习的技术、方向或近期目标。</p>
+
+  <h2>这里记录什么</h2>
+  <p>这里填写网站内容介绍。</p>
+
+  <h2>联系我</h2>
+  <p>
+    <a href={siteConfig.author.github}>GitHub</a>
+    ·
+    <a href={`mailto:${siteConfig.author.email}`}>{siteConfig.author.email}</a>
+  </p>
+</article>
+```
+
+常用标签：
+
+- `<h2>`：添加一个内容分区标题。
+- `<p>`：添加一段文字。
+- `<a href="地址">文字</a>`：添加链接。
+- `<ul><li>...</li></ul>`：添加无序列表。
+- `{siteConfig.author.name}`：读取配置中的昵称。
+
+### 修改昵称、邮箱和 GitHub
+
+这些信息不要分别硬编码到多个页面，应优先修改 `src/config/site.ts`：
+
+```ts
+author: {
+  name: 'DemiZ',
+  bio: '这里填写简短个人简介。',
+  github: 'https://github.com/DemiZovo',
+  email: 'DemiZovo@163.com',
+},
+```
+
+保存后，引用这些字段的页面会自动更新。详细经历、学习方向等较长内容仍在 `src/pages/about.astro` 中编辑。
+
+修改完成后运行 `npm run check:content` 和 `npm run build`，确认 Astro 标签配对正确且页面能够生成。
 
 如果修改 GitHub 用户名、仓库名或自定义域名，还要同步检查 `url`、README 和 GitHub Pages 配置。
 
@@ -360,11 +549,11 @@ git push
 
 GitHub Actions 会自动检查、构建并部署。可以在以下页面查看进度：
 
-<https://github.com/DemiZovo/My-website/actions>
+<https://github.com/DemiZovo/DemiZ/actions>
 
 部署成功后访问：
 
-<https://demizovo.github.io/My-website/>
+<https://demizovo.github.io/DemiZ/>
 
 GitHub Pages 更新通常需要几十秒。如果浏览器仍显示旧内容，可以稍等后刷新，必要时使用强制刷新。
 
