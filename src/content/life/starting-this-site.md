@@ -2,7 +2,7 @@
 title: 从这里开始记录
 description: 为代码学习和日常生活留下一块安静、长期可整理的空间。
 slug: starting-this-site
-published: 2026-08-10
+published: 2026-08-13
 tags: [网站, 记录]
 gallery: []
 draft: false

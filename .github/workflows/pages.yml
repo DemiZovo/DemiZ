@@ -23,6 +23,9 @@ jobs:
         run: npm ci
       - name: Resolve GitHub Pages URL
         shell: bash
+        env:
+          UMAMI_WEBSITE_ID: ${{ vars.UMAMI_WEBSITE_ID }}
+          UMAMI_SCRIPT_URL: ${{ vars.UMAMI_SCRIPT_URL }}
         run: |
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
@@ -33,6 +36,13 @@ jobs:
             echo "BASE_PATH=/${repo}" >> "$GITHUB_ENV"
           fi
           echo "PUBLIC_DEPLOY_ENV=production" >> "$GITHUB_ENV"
+          if [[ -n "$UMAMI_WEBSITE_ID" ]]; then
+            echo "PUBLIC_ANALYTICS_ENABLED=true" >> "$GITHUB_ENV"
+            echo "PUBLIC_ANALYTICS_SITE_ID=$UMAMI_WEBSITE_ID" >> "$GITHUB_ENV"
+            echo "PUBLIC_ANALYTICS_SCRIPT_URL=${UMAMI_SCRIPT_URL:-https://cloud.umami.is/script.js}" >> "$GITHUB_ENV"
+          else
+            echo "PUBLIC_ANALYTICS_ENABLED=false" >> "$GITHUB_ENV"
+          fi
       - name: Type and content checks
         run: npm run check:content
       - name: Production build
