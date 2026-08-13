@@ -19,6 +19,7 @@ DemiZ 的个人网站，用于整理代码学习笔记、展示项目和记录�
 - [插入图片](#插入图片)
 - [更换头像](#更换头像)
 - [修改关于我与个人资料](#修改关于我与个人资料)
+- [增加小红书主页链接](#增加小红书主页链接)
 - [展示 GitHub 项目](#展示-github-项目)
 - [检查并发布](#检查并发布)
 - [访问统计](#访问统计)
@@ -490,6 +491,95 @@ author: {
 修改完成后运行 `npm run check:content` 和 `npm run build`，确认 Astro 标签配对正确且页面能够生成。
 
 如果修改 GitHub 用户名、仓库名或自定义域名，还要同步检查 `url`、README 和 GitHub Pages 配置。
+
+## 增加小红书主页链接
+
+先在小红书 App 中进入个人主页，通过“分享主页 → 复制链接”取得自己的主页地址。请使用个人主页链接，不要使用某一篇笔记的分享链接。复制后可以先在浏览器中打开，确认它最终进入你的个人主页。
+
+推荐把链接放入统一的站点配置，再由“关于我”页面读取。以后更换主页地址时只需要修改一处。
+
+### 1. 扩展个人资料类型
+
+打开 `src/config/site.ts`，在 `SiteConfig` 的 `author` 类型中增加 `xiaohongshu`：
+
+```ts
+export interface SiteConfig {
+  name: string;
+  description: string;
+  url: string;
+  author: {
+    name: string;
+    bio: string;
+    github: string;
+    email: string;
+    xiaohongshu: string;
+  };
+  locale: string;
+  postsPerPage: number;
+}
+```
+
+### 2. 填写主页地址
+
+在同一文件的 `author` 配置中增加链接：
+
+```ts
+author: {
+  name: 'DemiZ',
+  bio: '这里填写简短个人简介。',
+  github: 'https://github.com/DemiZovo',
+  email: 'DemiZovo@163.com',
+  xiaohongshu: '在这里粘贴你的小红书个人主页链接',
+},
+```
+
+例如复制到的地址是什么，就完整保留其 `https://` 开头的链接。不要填写小红书号、昵称或本机打开后的临时页面地址。
+
+### 3. 在“关于我”页面显示
+
+打开 `src/pages/about.astro`，找到 GitHub 和邮箱所在的联系信息，在其中加入：
+
+```astro
+<p>
+  <a href={siteConfig.author.github}>GitHub</a>
+  ·
+  <a href={siteConfig.author.xiaohongshu} target="_blank" rel="noopener noreferrer">
+    小红书
+  </a>
+  ·
+  <a href={`mailto:${siteConfig.author.email}`}>{siteConfig.author.email}</a>
+</p>
+```
+
+`target="_blank"` 会在新标签页打开小红书，`rel="noopener noreferrer"` 用于安全地隔离外部页面。
+
+如果只想显示小红书链接，也可以使用：
+
+```astro
+<a href={siteConfig.author.xiaohongshu} target="_blank" rel="noopener noreferrer">
+  我的小红书主页
+</a>
+```
+
+### 4. 检查并发布
+
+修改后执行：
+
+```bash
+npm run check:content
+npm run build
+npm run verify:build
+```
+
+本地打开“关于我”页面，确认“小红书”链接能够进入正确的个人主页，再提交并推送：
+
+```bash
+git add src/config/site.ts src/pages/about.astro README.md
+git commit -m "Add Xiaohongshu profile link"
+git push
+```
+
+如果以后暂时不想展示，可以从 `src/pages/about.astro` 删除对应的 `<a>` 元素；保留配置字段不会影响网站运行。
 
 ## 展示 GitHub 项目
 
