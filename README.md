@@ -649,7 +649,7 @@ GitHub Pages 更新通常需要几十秒。如果浏览器仍显示旧内容，�
 
 ## 访问统计
 
-当前没有启用 Umami，不会加载第三方统计脚本。
+站点已接入 Umami。GitHub Pages 构建会在配置了仓库变量 `UMAMI_WEBSITE_ID` 后自动启用统计；未配置时不会加载第三方统计脚本。Umami Cloud 默认使用 `https://cloud.umami.is/script.js`，自托管实例可通过可选的仓库变量 `UMAMI_SCRIPT_URL` 覆盖。
 
 未来启用时，需要在 GitHub 仓库的 Actions Variables 或构建环境中设置：
 
