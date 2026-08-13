@@ -6,7 +6,7 @@
 
 站点代码与内容已完成本地发布验收。使用正式 GitHub Pages 子路径 `/My-website` 构建成功，共生成 23 个页面；类型检查、草稿隔离、子路径和内部链接目标检查全部通过。
 
-真实线上发布仍需要将当前目录推送到 GitHub 仓库 `DemiZovo/My-website`，并在仓库设置中选择 GitHub Actions 作为 Pages 来源。
+代码已推送到公开仓库 `DemiZovo/My-website`。首次工作流的检查与构建步骤全部通过，但仓库尚未启用 GitHub Pages，因此停在 `Configure GitHub Pages`；启用后重新运行工作流即可发布。
 
 ## 已确认信息
 
@@ -51,11 +51,9 @@
 
 ## 发布前仍需人工完成
 
-1. 创建或确认 GitHub 仓库 `DemiZovo/My-website`。
-2. 推送当前目录到该仓库的默认分支。
-3. 在 Settings → Pages 中选择 GitHub Actions。
-4. 等待工作流成功后访问 `https://demizovo.github.io/My-website/`。
-5. 在线检查手机/桌面、浅色/深色模式，并运行 Lighthouse。
+1. 在 Settings → Pages 中选择 GitHub Actions。
+2. 重新运行失败的工作流，成功后访问 `https://demizovo.github.io/My-website/`。
+3. 在线检查手机/桌面、浅色/深色模式，并运行 Lighthouse。
 
 ## 后续替换入口
 
