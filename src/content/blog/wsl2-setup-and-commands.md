@@ -5,7 +5,7 @@ slug: wsl2-setup-and-commands
 published: 2026-08-14
 category: 开发环境
 tags: [WSL2, Windows, Linux, Docker]
-draft: true
+draft: false
 featured: false
 toc: true
 ---
