@@ -8,9 +8,9 @@ export interface SiteConfig {
 }
 
 export const siteConfig = {
-  name: 'DemiZovo',
+  name: 'DemiZ',
   description: 'DemiZ 的代码学习与生活记录。',
-  url: 'https://demizovo.github.io/My-website',
+  url: 'https://demizovo.github.io/DemiZ',
   author: {
     name: 'DemiZ',
     bio: '',

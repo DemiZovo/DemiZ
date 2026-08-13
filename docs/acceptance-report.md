@@ -1,20 +1,20 @@
-# DemiZovo 网站验收报告
+# DemiZ 网站验收报告
 
 验收日期：2026-08-13
 
 ## 当前结论
 
-站点代码与内容已完成本地发布验收。使用正式 GitHub Pages 子路径 `/My-website` 构建成功，共生成 23 个页面；类型检查、草稿隔离、子路径和内部链接目标检查全部通过。
+站点代码与内容已完成本地发布验收。使用正式 GitHub Pages 子路径 `/DemiZ` 构建成功，共生成 23 个页面；类型检查、草稿隔离、子路径和内部链接目标检查全部通过。
 
-代码已推送到公开仓库 `DemiZovo/My-website`，GitHub Pages 已启用，工作流运行 `31700383843` 全部成功。正式首页、博客、项目、关于页和 RSS 均已在线返回 HTTP 200。
+代码已推送到公开仓库 `DemiZovo/DemiZ`，GitHub Pages 已启用，工作流运行 `31700383843` 全部成功。正式首页、博客、项目、关于页和 RSS 均已在线返回 HTTP 200。
 
 ## 已确认信息
 
-- 网站名称：DemiZovo
+- 网站名称：DemiZ
 - 昵称：DemiZ
 - GitHub：`https://github.com/DemiZovo`
 - 邮箱：`DemiZovo@163.com`
-- 目标地址：`https://demizovo.github.io/My-website/`
+- 目标地址：`https://demizovo.github.io/DemiZ/`
 - 自定义域名：暂不使用
 - 项目展示：暂不展示仓库，项目页提供空态和 GitHub 主页入口
 - 头像：暂时使用纯白圆形占位，后续可替换本地照片
@@ -26,12 +26,12 @@
 | 检查项 | 结果 | 证据 |
 |---|---|---|
 | Astro 类型与内容检查 | PASS | 31 个文件，0 errors / 0 warnings / 0 hints |
-| 子路径生产构建 | PASS | `SITE_URL=https://demizovo.github.io BASE_PATH=/My-website pnpm run build` |
+| 子路径生产构建 | PASS | `SITE_URL=https://demizovo.github.io BASE_PATH=/DemiZ pnpm run build` |
 | 页面生成 | PASS | 23 个静态页面 |
 | 构建产物验证 | PASS | 验证 28 个生成文件 |
 | 草稿隔离 | PASS | 页面、搜索、RSS、Sitemap 均无测试草稿 marker |
 | 内部链接目标 | PASS | 生成 HTML 内本地链接均能映射到产物 |
-| GitHub Pages 子路径 | PASS | 根相对链接均包含 `/My-website` |
+| GitHub Pages 子路径 | PASS | 根相对链接均包含 `/DemiZ` |
 | 示例公开内容替换 | PASS | 已替换为 3 篇正式技术文章和 1 篇生活日志 |
 | 真实身份配置 | PASS | 站名、昵称、GitHub、邮箱和目标地址已替换 |
 | 项目空态 | PASS | 没有配置仓库时不请求 GitHub API并显示说明 |
