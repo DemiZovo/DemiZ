@@ -21,7 +21,7 @@ const { Content, headings } = await render(entry);
   <div class="article-layout">
     <article class="article" data-article-content>
       <p><a href={sitePath('/blog/')}>← 返回技术博客</a></p>
-      <header class="article-hero article-hero--blog"><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')} · {entry.data.category}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
+      <header class="article-hero article-hero--blog"><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')} · <a href={sitePath(`/categories/${encodeURIComponent(entry.data.category)}/`)}>{entry.data.category}</a></p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
       <Content />
       <ArticleNavigation
         previous={previous && { title: previous.data.title, path: `/blog/${previous.data.slug}/` }}

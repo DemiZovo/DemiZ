@@ -16,6 +16,9 @@ const groups = Map.groupBy(entries, entry => String(entry.data.published.getFull
           <li>
             <time datetime={item.data.published.toISOString()}>{item.data.published.toLocaleDateString('zh-CN')}</time>
             <a href={sitePath(entryPath(item))}>{item.data.title}</a>
+            {item.collection === 'blog' && (
+              <a class="tag" href={sitePath(`/categories/${encodeURIComponent(item.data.category)}/`)}>{item.data.category}</a>
+            )}
             <span class="read-badge" data-read-marker={`${item.collection}:${item.data.slug}`} hidden>✓ 已读</span>
           </li>
         ))}

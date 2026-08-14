@@ -11,7 +11,7 @@ const posts = await getPublicBlog();
   <div class="grid">
     {posts.map(post => (
       <article class="card article-card">
-        <p class="meta"><time datetime={post.data.published.toISOString()}>{post.data.published.toLocaleDateString('zh-CN')}</time> · {post.data.category}</p>
+        <p class="meta"><time datetime={post.data.published.toISOString()}>{post.data.published.toLocaleDateString('zh-CN')}</time> · <a href={sitePath(`/categories/${encodeURIComponent(post.data.category)}/`)}>{post.data.category}</a></p>
         <h2><a class="card-link" href={sitePath(entryPath(post))}>{post.data.title}</a></h2>
         <p>{post.data.description}</p>
         <div class="card-footer">
