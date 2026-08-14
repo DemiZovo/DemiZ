@@ -62,8 +62,6 @@ jobs:
         run: pnpm run check:content
       - name: Production build
         run: pnpm run build
-      - name: Isolate private writer from Pages artifact
-        run: pnpm run prepare:writer
       - name: Verify generated URLs
         run: pnpm run verify:build
       - name: Configure GitHub Pages
