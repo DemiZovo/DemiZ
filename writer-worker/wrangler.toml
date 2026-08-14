@@ -5,6 +5,7 @@ compatibility_date = "2026-08-14"
 [vars]
 GITHUB_REPOSITORY = "DemiZovo/DemiZ"
 GITHUB_BRANCH = "main"
+GITHUB_CLIENT_ID = "Ov23ct6F4mB3VsCM6zk0"
 ALLOWED_GITHUB_USER_ID = "304166225"
 
 [assets]
