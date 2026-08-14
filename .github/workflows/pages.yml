@@ -28,6 +28,7 @@ jobs:
           UMAMI_SCRIPT_URL: ${{ vars.UMAMI_SCRIPT_URL }}
           SUPABASE_URL: ${{ vars.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+          WRITER_URL: ${{ vars.WRITER_URL }}
         run: |
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
@@ -49,10 +50,15 @@ jobs:
             echo "PUBLIC_SUPABASE_URL=$SUPABASE_URL" >> "$GITHUB_ENV"
             echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" >> "$GITHUB_ENV"
           fi
+          if [[ -n "$WRITER_URL" ]]; then
+            echo "PUBLIC_WRITER_URL=$WRITER_URL" >> "$GITHUB_ENV"
+          fi
       - name: Type and content checks
         run: npm run check:content
       - name: Production build
         run: npm run build
+      - name: Isolate private writer from Pages artifact
+        run: npm run prepare:writer
       - name: Verify generated URLs
         run: npm run verify:build
       - name: Configure GitHub Pages

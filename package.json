@@ -8,6 +8,9 @@
     "check": "astro check",
     "check:content": "astro sync && astro check",
     "build": "astro build",
+    "build:writer": "astro build && node scripts/prepare-writer.mjs",
+    "prepare:writer": "node scripts/prepare-writer.mjs",
+    "check:writer": "node scripts/check-writer-worker.mjs",
     "verify:build": "node scripts/verify-build.mjs"
   },
   "dependencies": {
