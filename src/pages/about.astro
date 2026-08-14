@@ -2,12 +2,17 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import CopyEmail from '../components/CopyEmail.astro';
 import { siteConfig } from '../config/site';
+import { sitePath } from '../lib/urls';
 ---
 <BaseLayout title={`关于我 | ${siteConfig.name}`}>
   <article class="article">
     <p class="eyebrow">About</p>
     <h1>关于我</h1>
-    <div class="avatar-placeholder avatar-large" role="img" aria-label="DemiZ 的纯白头像占位图"></div>
+    <img
+      class="avatar-placeholder avatar-large"
+      src={sitePath('/images/profile/profile-sakura.jpeg')}
+      alt="DemiZ 的头像"
+    />
     <p>你好，我是 {siteConfig.author.name}。热爱生活，热爱学习。</p>
     <h2>这里记录什么</h2>
     <p>这里用于整理代码学习笔记，也保存技术之外的日常记录。</p>

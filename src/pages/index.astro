@@ -10,7 +10,11 @@ const entries = allEntries.slice(0, 6);
 ---
 <BaseLayout>
   <section class="hero hero-profile">
-    <div class="avatar-placeholder" role="img" aria-label="DemiZ 的纯白头像"></div>
+    <img
+      class="avatar-placeholder"
+      src={sitePath('/images/profile/profile-sakura.jpeg')}
+      alt="DemiZ 的头像"
+    />
     <div>
       <p class="eyebrow">程序员 · 学习者 · 生活记录者</p>
       <h1>{siteConfig.name}</h1>
