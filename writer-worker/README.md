@@ -21,7 +21,7 @@ npm run build:writer
 
 ## 3. 配置 Worker
 
-复制 `wrangler.toml.example` 为 `wrangler.toml`，填写：
+部署配置 `writer-worker/wrangler.toml` 已提交，且不包含秘密。请在 Cloudflare 的 **Settings → Variables & Secrets** 配置普通变量：
 
 - `GITHUB_REPOSITORY`：例如 `OWNER/REPOSITORY`
 - `GITHUB_BRANCH`：公开站点的默认分支

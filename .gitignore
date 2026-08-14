@@ -6,5 +6,4 @@ dist/
 .env
 .env.*
 !.env.example
-writer-worker/wrangler.toml
 writer-worker/public/

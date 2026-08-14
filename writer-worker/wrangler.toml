@@ -1,0 +1,8 @@
+name = "demiz-writer"
+main = "src/index.js"
+compatibility_date = "2026-08-15"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
