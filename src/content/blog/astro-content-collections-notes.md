@@ -6,7 +6,7 @@ published: 2026-08-12
 category: Astro
 tags: [Astro, TypeScript, Markdown]
 draft: false
-featured: true
+featured: false
 toc: true
 ---
 

@@ -6,7 +6,7 @@ published: 2026-08-11
 category: 部署
 tags: [Astro, GitHub Pages, CI]
 draft: false
-featured: true
+featured: false
 toc: true
 ---
 

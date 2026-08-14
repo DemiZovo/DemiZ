@@ -6,7 +6,7 @@ published: 2026-08-13
 tags: [网站, 记录]
 gallery: []
 draft: false
-featured: true
+featured: false
 ---
 
 今天为这个网站写下第一篇生活记录。
