@@ -2,6 +2,7 @@
 import Analytics from '../components/Analytics.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import ReadMarkers from '../components/ReadMarkers.astro';
 import { siteConfig } from '../config/site';
 import { sitePath } from '../lib/urls';
 import '../styles/global.css';
@@ -49,6 +50,7 @@ const ogImage = image ? new URL(sitePath(image), Astro.site) : undefined;
       <main id="main-content" class="site-main"><slot /></main>
       <Footer />
     </div>
+    <ReadMarkers />
     <script is:inline>
       const button = document.querySelector('[data-theme-toggle]');
       const update = () => {

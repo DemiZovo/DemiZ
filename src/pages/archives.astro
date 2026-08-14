@@ -1,4 +1,25 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'; import {entryPath,getPublicContent} from '../lib/content'; import {sitePath} from '../lib/urls'; const entries=await getPublicContent(); const groups=Map.groupBy(entries,e=>String(e.data.published.getFullYear()));
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { entryPath, getPublicContent } from '../lib/content';
+import { sitePath } from '../lib/urls';
+
+const entries = await getPublicContent();
+const groups = Map.groupBy(entries, entry => String(entry.data.published.getFullYear()));
 ---
-<BaseLayout title="时间归档"><section class="hero"><p class="eyebrow">Archives</p><h1>时间归档</h1></section>{[...groups].map(([year,items])=><section aria-labelledby={`year-${year}`}><h2 id={`year-${year}`}>{year}</h2><ul class="list-clean">{items.map(item=><li><time datetime={item.data.published.toISOString()}>{item.data.published.toLocaleDateString('zh-CN')}</time> · <a href={sitePath(entryPath(item))}>{item.data.title}</a></li>)}</ul></section>)}</BaseLayout>
+<BaseLayout title="时间归档">
+  <section class="hero"><p class="eyebrow">Archives</p><h1>时间归档</h1><p>按发布时间从新到旧排列。</p></section>
+  {[...groups].map(([year, items]) => (
+    <section aria-labelledby={`year-${year}`} class="archive-year">
+      <h2 id={`year-${year}`}>{year}</h2>
+      <ul class="list-clean archive-list">
+        {items.map(item => (
+          <li>
+            <time datetime={item.data.published.toISOString()}>{item.data.published.toLocaleDateString('zh-CN')}</time>
+            <a href={sitePath(entryPath(item))}>{item.data.title}</a>
+            <span class="read-badge" data-read-marker={`${item.collection}:${item.data.slug}`} hidden>✓ 已读</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</BaseLayout>

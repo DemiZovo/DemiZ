@@ -1,14 +1,37 @@
 ---
 import { render } from 'astro:content';
+import ArticleNavigation from '../../components/ArticleNavigation.astro';
+import ArticleReaderTools from '../../components/ArticleReaderTools.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getPublicLife } from '../../lib/content';
 import { sitePath } from '../../lib/urls';
+
 export async function getStaticPaths() {
-  return (await getPublicLife()).map(entry => ({ params: { slug: entry.data.slug }, props: { entry } }));
+  const entries = await getPublicLife();
+  return entries.map((entry, index) => ({
+    params: { slug: entry.data.slug },
+    props: { entry, previous: entries[index - 1], next: entries[index + 1] },
+  }));
 }
-const { entry } = Astro.props;
-const { Content } = await render(entry);
+
+const { entry, previous, next } = Astro.props;
+const { Content, headings } = await render(entry);
 ---
 <BaseLayout title={`${entry.data.title} | 生活日志`} description={entry.data.description} image={entry.data.cover} type="article">
-  <article class="article"><a href={sitePath('/life/')}>← 返回生活日志</a><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p><Content /></article>
+  <div class="article-layout">
+    <article class="article" data-article-content>
+      <p><a href={sitePath('/life/')}>← 返回生活日志</a></p>
+      <p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p>
+      <h1>{entry.data.title}</h1>
+      <p>{entry.data.description}</p>
+      <Content />
+      <ArticleNavigation
+        previous={previous && { title: previous.data.title, path: `/life/${previous.data.slug}/` }}
+        next={next && { title: next.data.title, path: `/life/${next.data.slug}/` }}
+        indexPath="/life/"
+        indexLabel="返回生活日志"
+      />
+    </article>
+    <ArticleReaderTools entryKey={`life:${entry.data.slug}`} headings={headings} />
+  </div>
 </BaseLayout>

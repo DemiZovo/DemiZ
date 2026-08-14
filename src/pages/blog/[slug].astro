@@ -1,19 +1,35 @@
 ---
 import { render } from 'astro:content';
+import ArticleNavigation from '../../components/ArticleNavigation.astro';
+import ArticleReaderTools from '../../components/ArticleReaderTools.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getPublicBlog } from '../../lib/content';
 import { sitePath } from '../../lib/urls';
+
 export async function getStaticPaths() {
-  return (await getPublicBlog()).map(entry => ({ params: { slug: entry.data.slug }, props: { entry } }));
+  const entries = await getPublicBlog();
+  return entries.map((entry, index) => ({
+    params: { slug: entry.data.slug },
+    props: { entry, previous: entries[index - 1], next: entries[index + 1] },
+  }));
 }
-const { entry } = Astro.props;
+
+const { entry, previous, next } = Astro.props;
 const { Content, headings } = await render(entry);
 ---
 <BaseLayout title={`${entry.data.title} | 技术博客`} description={entry.data.description} image={entry.data.cover} type="article">
-  <article class="article">
-    <p><a href={sitePath('/blog/')}>← 返回技术博客</a></p>
-    <header><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')} · {entry.data.category}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
-    {entry.data.toc && headings.length > 0 && <nav class="toc" aria-label="文章目录"><strong>目录</strong><ul>{headings.map(h => <li><a href={`#${h.slug}`}>{h.text}</a></li>)}</ul></nav>}
-    <Content />
-  </article>
+  <div class="article-layout">
+    <article class="article" data-article-content>
+      <p><a href={sitePath('/blog/')}>← 返回技术博客</a></p>
+      <header><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')} · {entry.data.category}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
+      <Content />
+      <ArticleNavigation
+        previous={previous && { title: previous.data.title, path: `/blog/${previous.data.slug}/` }}
+        next={next && { title: next.data.title, path: `/blog/${next.data.slug}/` }}
+        indexPath="/blog/"
+        indexLabel="返回技术博客"
+      />
+    </article>
+    <ArticleReaderTools entryKey={`blog:${entry.data.slug}`} headings={headings} showToc={entry.data.toc} />
+  </div>
 </BaseLayout>

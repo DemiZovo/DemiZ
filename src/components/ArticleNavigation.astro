@@ -1,0 +1,27 @@
+---
+import { sitePath } from '../lib/urls';
+
+interface NavigationItem {
+  title: string;
+  path: string;
+}
+
+interface Props {
+  previous?: NavigationItem | undefined;
+  next?: NavigationItem | undefined;
+  indexPath: string;
+  indexLabel: string;
+}
+
+const { previous, next, indexPath, indexLabel } = Astro.props;
+---
+
+<nav class="article-navigation" aria-label="文章导航">
+  <div class="article-navigation__item article-navigation__item--previous">
+    {previous && <a href={sitePath(previous.path)} rel="prev"><span class="article-navigation__label">← 上一篇</span><span class="article-navigation__title">{previous.title}</span></a>}
+  </div>
+  <a class="article-navigation__index" href={sitePath(indexPath)}>{indexLabel}</a>
+  <div class="article-navigation__item article-navigation__item--next">
+    {next && <a href={sitePath(next.path)} rel="next"><span class="article-navigation__label">下一篇 →</span><span class="article-navigation__title">{next.title}</span></a>}
+  </div>
+</nav>

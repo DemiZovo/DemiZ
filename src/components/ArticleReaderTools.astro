@@ -1,0 +1,145 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  entryKey: string;
+  headings?: Heading[];
+  showToc?: boolean;
+}
+
+const { entryKey, headings = [], showToc = true } = Astro.props;
+const tocHeadings = showToc ? headings.filter(({ depth }) => depth >= 2 && depth <= 4) : [];
+---
+
+<aside class="reader-tools" data-reader-tools data-entry-key={entryKey} aria-label="阅读工具">
+  <div class="reader-progress" aria-hidden="true"><span data-reader-progress></span></div>
+
+  {tocHeadings.length > 0 && (
+    <nav class="reader-toc" aria-label="文章目录">
+      <p class="reader-tools__title">目录</p>
+      <ol>
+        {tocHeadings.map(heading => (
+          <li style={`--toc-depth:${heading.depth - 2}`}>
+            <a href={`#${heading.slug}`} data-toc-link={heading.slug}>{heading.text}</a>
+          </li>
+        ))}
+      </ol>
+    </nav>
+  )}
+
+  <div class="reader-actions" aria-label="文章操作">
+    <button type="button" data-like-button aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.4 10.55 19.1C5.4 14.5 2 11.45 2 7.7 2 4.65 4.4 2.25 7.45 2.25c1.72 0 3.38.8 4.55 2.05a6.2 6.2 0 0 1 4.55-2.05C19.6 2.25 22 4.65 22 7.7c0 3.75-3.4 6.8-8.55 11.42L12 20.4Z" /></svg>
+      <span data-like-label>点赞</span>
+    </button>
+    <button type="button" data-read-button aria-pressed="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>
+      <span data-read-label>标为已读</span>
+    </button>
+    <button type="button" data-back-to-top aria-label="回到文章开头">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 11 6-6 6 6M12 5v14" /></svg>
+      <span>回到开头</span>
+    </button>
+  </div>
+  <p class="reader-status" role="status" aria-live="polite" data-reader-status></p>
+</aside>
+
+<script>
+  const STORAGE = {
+    likes: 'demiz:article-likes',
+    reads: 'demiz:article-reads',
+  } as const;
+
+  const readSet = (key: string) => {
+    try {
+      const value = JSON.parse(localStorage.getItem(key) ?? '[]');
+      return new Set<string>(Array.isArray(value) ? value.filter(item => typeof item === 'string') : []);
+    } catch {
+      return new Set<string>();
+    }
+  };
+
+  const writeSet = (key: string, value: Set<string>) => {
+    try { localStorage.setItem(key, JSON.stringify([...value])); } catch {}
+  };
+
+  for (const tools of document.querySelectorAll<HTMLElement>('[data-reader-tools]')) {
+    const entryKey = tools.dataset.entryKey;
+    const likeButton = tools.querySelector<HTMLButtonElement>('[data-like-button]');
+    const likeLabel = tools.querySelector<HTMLElement>('[data-like-label]');
+    const readButton = tools.querySelector<HTMLButtonElement>('[data-read-button]');
+    const readLabel = tools.querySelector<HTMLElement>('[data-read-label]');
+    const topButton = tools.querySelector<HTMLButtonElement>('[data-back-to-top]');
+    const progress = tools.querySelector<HTMLElement>('[data-reader-progress]');
+    const status = tools.querySelector<HTMLElement>('[data-reader-status]');
+    const article = document.querySelector<HTMLElement>('[data-article-content]');
+    if (!entryKey || !likeButton || !likeLabel || !readButton || !readLabel || !topButton || !progress || !status || !article) continue;
+
+    const likes = readSet(STORAGE.likes);
+    const reads = readSet(STORAGE.reads);
+
+    const updateLike = () => {
+      const liked = likes.has(entryKey);
+      likeButton.classList.toggle('is-active', liked);
+      likeButton.setAttribute('aria-pressed', String(liked));
+      likeLabel.textContent = liked ? '已点赞' : '点赞';
+    };
+
+    const updateRead = () => {
+      const read = reads.has(entryKey);
+      readButton.classList.toggle('is-active', read);
+      readButton.setAttribute('aria-pressed', String(read));
+      readLabel.textContent = read ? '已读' : '标为已读';
+    };
+
+    const setRead = (read: boolean, announce = true) => {
+      read ? reads.add(entryKey) : reads.delete(entryKey);
+      writeSet(STORAGE.reads, reads);
+      updateRead();
+      if (announce) status.textContent = read ? '已将这篇文章标记为已读' : '已取消已读标记';
+    };
+
+    likeButton.addEventListener('click', () => {
+      const liked = !likes.has(entryKey);
+      liked ? likes.add(entryKey) : likes.delete(entryKey);
+      writeSet(STORAGE.likes, likes);
+      updateLike();
+      status.textContent = liked ? '谢谢你的喜欢' : '已取消点赞';
+    });
+
+    readButton.addEventListener('click', () => setRead(!reads.has(entryKey)));
+    topButton.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    const tocLinks = [...tools.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+    const sections = tocLinks.map(link => document.getElementById(link.dataset.tocLink ?? '')).filter((section): section is HTMLElement => Boolean(section));
+    let automaticallyMarked = reads.has(entryKey);
+
+    const onScroll = () => {
+      const articleTop = article.offsetTop;
+      const available = Math.max(article.scrollHeight - window.innerHeight, 1);
+      const ratio = Math.min(Math.max((window.scrollY - articleTop + 120) / available, 0), 1);
+      progress.style.width = `${ratio * 100}%`;
+      topButton.classList.toggle('is-visible', window.scrollY > 420);
+
+      if (!automaticallyMarked && ratio >= .7) {
+        automaticallyMarked = true;
+        setRead(true, false);
+      }
+
+      let activeId = '';
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= 150) activeId = section.id;
+      }
+      for (const link of tocLinks) link.classList.toggle('is-active', link.dataset.tocLink === activeId);
+    };
+
+    updateLike();
+    updateRead();
+    onScroll();
+    document.addEventListener('scroll', onScroll, { passive: true });
+  }
+</script>
