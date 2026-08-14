@@ -2,7 +2,7 @@ export interface SiteConfig {
   name: string;
   description: string;
   url: string;
-  author: { name: string; bio: string; github: string; email: string };
+  author: { name: string; bio: string; github: string; email: string; leetcode: string };
   locale: string;
   postsPerPage: number;
 }
@@ -16,6 +16,7 @@ export const siteConfig = {
     bio: '',
     github: 'https://github.com/DemiZovo',
     email: 'DemiZovo@163.com',
+    leetcode:'https://leetcode.cn/u/demiz-ovo/'
   },
   locale: 'zh-CN',
   postsPerPage: 10,
