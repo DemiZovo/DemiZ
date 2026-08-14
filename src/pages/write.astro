@@ -35,6 +35,8 @@ import '../styles/global.css';
         <button class="writer-button writer-button--ghost" type="button" data-preview>预览</button>
         <button class="writer-button writer-button--ghost" type="button" data-download>下载 MD</button>
         <button class="writer-button writer-button--ghost" type="button" data-skill>导入 DemiZ 写作 Skill</button>
+        <button class="writer-button writer-button--ghost" type="button" data-save-draft>保存草稿</button>
+        <button class="writer-button writer-button--ghost" type="button" data-drafts>草稿箱 <span class="writer-draft-count" data-draft-count>0</span></button>
         <a class="writer-button writer-button--ghost" href="/logout">退出</a>
         <button class="writer-button writer-button--publish" type="button" data-publish>发布</button>
       </div>
@@ -68,6 +70,25 @@ import '../styles/global.css';
           <label class="writer-check" data-blog-field><input name="toc" type="checkbox" checked /> 显示目录</label>
         </fieldset>
 
+        <fieldset class="writer-card writer-ai">
+          <legend>AI 写作助手</legend>
+          <div class="writer-ai__skill" data-ai-skill-state>DemiZ Skill 未导入</div>
+          <label><span>写作要求或零散材料</span><textarea name="aiPrompt" rows="5" maxlength="6000" placeholder="例如：根据这些学习笔记整理一篇文章，重点解释踩坑和验证过程……"></textarea></label>
+          <div class="writer-ai__actions">
+            <button type="button" data-ai-action="outline">生成大纲</button>
+            <button type="button" data-ai-action="draft">生成正文</button>
+            <button type="button" data-ai-action="polish">润色正文</button>
+          </div>
+          <p class="writer-ai__status" role="status" aria-live="polite" data-ai-status>使用 Cloudflare Workers AI，每日免费额度内不收费。</p>
+          <div class="writer-ai__result" data-ai-result hidden>
+            <label><span>AI 结果</span><textarea rows="12" readonly data-ai-output></textarea></label>
+            <div class="writer-ai__actions">
+              <button type="button" data-ai-replace>替换正文</button>
+              <button type="button" data-ai-append>追加到正文</button>
+            </div>
+          </div>
+        </fieldset>
+
         <details class="writer-card writer-skill" data-blog-field data-skill-guide>
           <summary>DemiZ 写作规范</summary>
           <ol>
@@ -98,11 +119,43 @@ import '../styles/global.css';
     <form method="dialog"><button aria-label="关闭预览">×</button></form>
     <article class="article" data-preview-output></article>
   </dialog>
+
+  <dialog class="writer-dialog writer-dialog--drafts" data-drafts-dialog>
+    <div class="writer-drafts__header">
+      <div>
+        <p class="eyebrow">Local drafts</p>
+        <h2>草稿箱</h2>
+        <p class="muted">草稿只保存在这个浏览器中，不会提交到 GitHub。</p>
+      </div>
+      <form method="dialog"><button aria-label="关闭草稿箱">×</button></form>
+    </div>
+    <p class="writer-drafts__empty" data-drafts-empty>还没有保存过草稿。</p>
+    <ul class="writer-draft-list" data-draft-list></ul>
+  </dialog>
   </main>
 
 <script>
   type Collection = 'blog' | 'life';
   type ImageEntry = { file: File; alt: string; caption: string };
+  type DraftRecord = {
+    id: string;
+    savedAt: string;
+    collection: Collection;
+    title: string;
+    slug: string;
+    body: string;
+    description: string;
+    tags: string;
+    category: string;
+    published: string;
+    updated: string;
+    aiPrompt: string;
+    skillEnabled: boolean;
+    draft: boolean;
+    featured: boolean;
+    toc: boolean;
+    images: ImageEntry[];
+  };
   const root = document.querySelector<HTMLElement>('[data-writer]');
   const form = root?.querySelector<HTMLFormElement>('[data-form]') as HTMLFormElement;
   if (!root || !form) throw new Error('Writer UI is unavailable');
@@ -111,8 +164,19 @@ import '../styles/global.css';
   const status = $('[data-status]') as HTMLElement;
   const imageInput = $('[data-images]') as HTMLInputElement;
   let images: ImageEntry[] = [];
+  let currentDraftId: string | null = null;
+  let skillEnabled = false;
+  try { skillEnabled = localStorage.getItem('demiz-writer-skill-enabled') === 'true'; } catch {}
   const today = new Date().toISOString().slice(0, 10);
   (form.elements.namedItem('published') as HTMLInputElement).value = today;
+  const draftDatabase = new Promise<IDBDatabase>((resolve, reject) => {
+    const request = indexedDB.open('demiz-writer', 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains('drafts')) request.result.createObjectStore('drafts', { keyPath: 'id' });
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
 
   const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]!));
   const yamlString = (value: string) => JSON.stringify(value.trim());
@@ -125,15 +189,136 @@ import '../styles/global.css';
     return `${stem}.${extension}`;
   };
 
+  async function draftRequest<T>(mode: IDBTransactionMode, operation: (store: IDBObjectStore) => IDBRequest<T>) {
+    const database = await draftDatabase;
+    return new Promise<T>((resolve, reject) => {
+      const transaction = database.transaction('drafts', mode);
+      const request = operation(transaction.objectStore('drafts'));
+      let result: T;
+      request.onsuccess = () => { result = request.result; };
+      request.onerror = () => reject(request.error);
+      transaction.oncomplete = () => resolve(result);
+      transaction.onerror = () => reject(transaction.error);
+      transaction.onabort = () => reject(transaction.error);
+    });
+  }
+
+  const getDrafts = () => draftRequest<DraftRecord[]>('readonly', (store) => store.getAll());
+  const putDraft = (draft: DraftRecord) => draftRequest<IDBValidKey>('readwrite', (store) => store.put(draft));
+  const removeDraft = (id: string) => draftRequest<undefined>('readwrite', (store) => store.delete(id));
+  const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
+
+  function updateSkillState() {
+    const button = $('[data-skill]') as HTMLButtonElement;
+    const indicator = $('[data-ai-skill-state]') as HTMLElement;
+    button.textContent = skillEnabled ? 'DemiZ Skill 已导入' : '导入 DemiZ 写作 Skill';
+    indicator.textContent = skillEnabled ? 'DemiZ Skill 已启用' : 'DemiZ Skill 未导入';
+    indicator.classList.toggle('is-active', skillEnabled);
+  }
+
+  function readDraft(): DraftRecord {
+    return {
+      id: currentDraftId || crypto.randomUUID(),
+      savedAt: new Date().toISOString(),
+      collection: collection(),
+      title: field('title').value,
+      slug: field('slug').value,
+      body: field('body').value,
+      description: field('description').value,
+      tags: field('tags').value,
+      category: field('category').value,
+      published: field('published').value,
+      updated: field('updated').value,
+      aiPrompt: field('aiPrompt').value,
+      skillEnabled,
+      draft: (field('draft') as HTMLInputElement).checked,
+      featured: (field('featured') as HTMLInputElement).checked,
+      toc: (field('toc') as HTMLInputElement).checked,
+      images: images.map((image) => ({ ...image })),
+    };
+  }
+
+  function restoreDraft(draft: DraftRecord) {
+    currentDraftId = draft.id;
+    (form.elements.namedItem('collection') as RadioNodeList).value = draft.collection;
+    field('title').value = draft.title;
+    field('slug').value = draft.slug;
+    field('body').value = draft.body;
+    field('description').value = draft.description;
+    field('tags').value = draft.tags;
+    field('category').value = draft.category;
+    field('published').value = draft.published || today;
+    field('updated').value = draft.updated;
+    field('aiPrompt').value = draft.aiPrompt || '';
+    skillEnabled = Boolean(draft.skillEnabled);
+    try { localStorage.setItem('demiz-writer-skill-enabled', String(skillEnabled)); } catch {}
+    updateSkillState();
+    (field('draft') as HTMLInputElement).checked = draft.draft;
+    (field('featured') as HTMLInputElement).checked = draft.featured;
+    (field('toc') as HTMLInputElement).checked = draft.toc;
+    const slug = field('slug') as HTMLInputElement;
+    if (draft.slug) slug.dataset.edited = 'true'; else delete slug.dataset.edited;
+    images = draft.images || [];
+    form.dispatchEvent(new Event('change', { bubbles: true }));
+    renderImages();
+  }
+
+  async function updateDraftCount() {
+    const drafts = await getDrafts();
+    ($('[data-draft-count]') as HTMLElement).textContent = String(drafts.length);
+    return drafts;
+  }
+
+  async function renderDrafts() {
+    const drafts = (await updateDraftCount()).sort((left, right) => right.savedAt.localeCompare(left.savedAt));
+    const list = document.querySelector('[data-draft-list]') as HTMLUListElement;
+    const empty = document.querySelector('[data-drafts-empty]') as HTMLElement;
+    empty.hidden = drafts.length > 0;
+    list.replaceChildren(...drafts.map((draft) => {
+      const item = document.createElement('li');
+      item.className = 'writer-draft-item';
+      const summary = document.createElement('div');
+      const title = document.createElement('strong');
+      title.textContent = draft.title.trim() || '未命名草稿';
+      const meta = document.createElement('span');
+      const savedAt = new Date(draft.savedAt).toLocaleString('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
+      meta.textContent = `${draft.collection === 'blog' ? '技术博客' : '生活随笔'} · ${savedAt}`;
+      summary.append(title, meta);
+      const actions = document.createElement('div');
+      const restore = document.createElement('button');
+      restore.type = 'button';
+      restore.textContent = '继续写';
+      restore.addEventListener('click', () => {
+        restoreDraft(draft);
+        (document.querySelector('[data-drafts-dialog]') as HTMLDialogElement).close();
+        status.textContent = `已恢复草稿：${draft.title.trim() || '未命名草稿'}`;
+      });
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'writer-draft-item__delete';
+      remove.textContent = '删除';
+      remove.addEventListener('click', async () => {
+        if (!confirm(`确定删除草稿“${draft.title.trim() || '未命名草稿'}”吗？`)) return;
+        await removeDraft(draft.id);
+        if (currentDraftId === draft.id) currentDraftId = null;
+        await renderDrafts();
+      });
+      actions.append(restore, remove);
+      item.append(summary, actions);
+      return item;
+    }));
+  }
+
   function buildMarkdown() {
     const data = new FormData(form);
     const kind = collection();
     const slug = String(data.get('slug') || '').trim();
     const tags = String(data.get('tags') || '').split(',').map((tag) => tag.trim()).filter(Boolean);
-    const lines = ['---', `title: ${yamlString(String(data.get('title') || ''))}`, `description: ${yamlString(String(data.get('description') || ''))}`, `slug: ${slug}`, `published: ${data.get('published')}`];
+    const lines = ['---', `title: ${yamlString(String(data.get('title') || ''))}`, `description: ${yamlString(String(data.get('description') || ''))}`, `slug: ${yamlString(slug)}`, `published: ${data.get('published')}`];
     if (data.get('updated')) lines.push(`updated: ${data.get('updated')}`);
     if (kind === 'blog') lines.push(`category: ${yamlString(String(data.get('category') || '未分类'))}`);
-    lines.push('tags:', ...tags.map((tag) => `  - ${yamlString(tag)}`));
+    if (tags.length) lines.push('tags:', ...tags.map((tag) => `  - ${yamlString(tag)}`));
+    else lines.push('tags: []');
     if (kind === 'life') {
       if (!images.length) lines.push('gallery: []');
       else lines.push('gallery:');
@@ -180,12 +365,96 @@ import '../styles/global.css';
     (form.elements.namedItem('draft') as HTMLInputElement).checked = true;
     (form.elements.namedItem('featured') as HTMLInputElement).checked = false;
     (form.elements.namedItem('toc') as HTMLInputElement).checked = true;
+    skillEnabled = true;
+    try { localStorage.setItem('demiz-writer-skill-enabled', 'true'); } catch {}
+    updateSkillState();
     const body = form.elements.namedItem('body') as HTMLTextAreaElement;
     if (!body.value.trim()) body.value = `简短说明问题背景，以及为什么需要处理这个问题。\n\n## 目标与约束\n\n说明目标、环境和已知限制。\n\n## 方案选择\n\n解释采用该方案的原因。\n\n## 实现过程\n\n记录关键步骤和代码。\n\n## 验证与限制\n\n记录验证方式、容易踩坑的地方和方案边界。\n\n## 总结\n\n保留可以迁移到其他项目的经验。`;
     const guide = $('[data-skill-guide]') as HTMLDetailsElement;
     guide.open = true;
     guide.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
     status.textContent = '已导入 DemiZ 写作 Skill：载入文章结构与默认发布规则。';
+  });
+
+  const aiStatus = $('[data-ai-status]') as HTMLElement;
+  const aiResult = $('[data-ai-result]') as HTMLElement;
+  const aiOutput = $('[data-ai-output]') as HTMLTextAreaElement;
+  const aiButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-ai-action]'));
+  aiButtons.forEach((button) => button.addEventListener('click', async () => {
+    const action = button.dataset.aiAction as 'outline' | 'draft' | 'polish';
+    const prompt = field('aiPrompt').value.trim();
+    const body = field('body').value.trim();
+    if (action === 'polish' && !body) { aiStatus.textContent = '请先在正文编辑器中写入需要润色的内容。'; return; }
+    if (action !== 'polish' && !prompt && !field('title').value.trim()) { aiStatus.textContent = '请先填写文章标题或写作要求。'; return; }
+    aiButtons.forEach((item) => item.disabled = true);
+    aiStatus.textContent = action === 'outline' ? '正在生成大纲……' : action === 'draft' ? '正在生成正文……' : '正在润色正文……';
+    try {
+      const response = await fetch('/api/assist', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          prompt,
+          useSkill: skillEnabled,
+          context: {
+            collection: collection(),
+            title: field('title').value,
+            description: field('description').value,
+            category: field('category').value,
+            tags: field('tags').value,
+            body,
+          },
+        }),
+      });
+      if (response.status === 401) { location.href = '/login'; return; }
+      const result = await response.json() as { text?: string; message?: string };
+      if (!response.ok || !result.text) throw new Error(result.message || 'AI 写作暂时不可用');
+      aiOutput.value = result.text.trim();
+      aiResult.hidden = false;
+      aiStatus.textContent = skillEnabled ? '生成完成，已应用 DemiZ Skill。请检查事实和代码后再写入正文。' : '生成完成。请检查事实和代码后再写入正文。';
+    } catch (error) {
+      aiStatus.textContent = error instanceof Error ? error.message : 'AI 写作暂时不可用，请稍后重试。';
+    } finally {
+      aiButtons.forEach((item) => item.disabled = false);
+    }
+  }));
+
+  $('[data-ai-replace]')?.addEventListener('click', () => {
+    const body = field('body');
+    if (body.value.trim() && !confirm('确定用 AI 结果替换当前正文吗？')) return;
+    body.value = aiOutput.value;
+    status.textContent = 'AI 结果已写入正文，请继续检查和编辑。';
+  });
+  $('[data-ai-append]')?.addEventListener('click', () => {
+    const body = field('body');
+    body.value = `${body.value.trim()}${body.value.trim() ? '\n\n' : ''}${aiOutput.value.trim()}`;
+    status.textContent = 'AI 结果已追加到正文，请继续检查和编辑。';
+  });
+
+  $('[data-save-draft]')?.addEventListener('click', async () => {
+    const button = $('[data-save-draft]') as HTMLButtonElement;
+    button.disabled = true;
+    try {
+      const draft = readDraft();
+      await putDraft(draft);
+      currentDraftId = draft.id;
+      await updateDraftCount();
+      status.textContent = `草稿已保存到当前浏览器：${draft.title.trim() || '未命名草稿'}`;
+    } catch {
+      status.textContent = '草稿保存失败，请检查浏览器存储空间或隐私设置。';
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $('[data-drafts]')?.addEventListener('click', async () => {
+    try {
+      await renderDrafts();
+      (document.querySelector('[data-drafts-dialog]') as HTMLDialogElement).showModal();
+    } catch {
+      status.textContent = '草稿箱暂时不可用，请检查浏览器隐私设置。';
+    }
   });
 
   $('[data-download]')?.addEventListener('click', () => {
@@ -234,14 +503,23 @@ import '../styles/global.css';
       if (response.status === 401) { location.href = '/login'; return; }
       const result = await response.json() as { message?: string; commitUrl?: string };
       if (!response.ok) throw new Error(result.message || '发布失败');
+      if (currentDraftId) {
+        try {
+          await removeDraft(currentDraftId);
+          currentDraftId = null;
+          await updateDraftCount();
+        } catch {}
+      }
       status.innerHTML = result.commitUrl ? `已提交：<a href="${escapeHtml(result.commitUrl)}" target="_blank" rel="noreferrer">查看提交</a>` : '文章已提交。';
     } catch (error) { status.textContent = error instanceof Error ? error.message : '发布失败，请稍后重试。'; }
     finally { button.disabled = false; }
   });
+  updateSkillState();
+  void updateDraftCount().catch(() => {});
 </script>
 
 <style>
-  .writer{position:relative;margin-inline:calc(50% - 50vw);padding:clamp(1rem,3vw,2.5rem) max(1rem,calc((100vw - 92rem)/2));background:radial-gradient(circle at 12% 85%,rgba(89,221,214,.28),transparent 31%),radial-gradient(circle at 89% 79%,rgba(255,226,73,.28),transparent 34%);min-height:75vh}.writer__header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}.writer__header h1{margin:0;line-height:1.1}.writer__header p{margin:.2rem 0}.writer__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}.writer-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.55rem .9rem;border:1px solid var(--accent);border-radius:.75rem;background:var(--accent);color:white;cursor:pointer}.writer-button--ghost{border-color:var(--border);background:var(--surface);color:var(--text)}.writer-button--publish{background:#198f7c;border-color:#198f7c}.writer-button:disabled{cursor:wait;opacity:.6}.writer__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,22rem);align-items:start;gap:1rem}.writer-card{min-width:0;padding:1rem;border:1px solid rgba(255,255,255,.7);border-radius:1.4rem;background:color-mix(in srgb,var(--surface) 80%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(18px)}fieldset.writer-card{margin:0}.writer-card legend{padding:0 .35rem;color:var(--muted);font-weight:700}.writer-card--editor{display:flex;flex-direction:column;min-height:65rem}.writer__title-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,.35fr);gap:.75rem}.writer label>span{display:block;margin-bottom:.25rem;color:var(--muted);font-size:.85rem}.writer input:not([type=radio]):not([type=checkbox]),.writer textarea{width:100%;padding:.7rem .8rem;border:1px solid var(--border);border-radius:.7rem;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text)}.writer__body{display:flex;flex:1;flex-direction:column;margin-top:.75rem}.writer__body textarea{flex:1;min-height:35rem;resize:vertical;font-family:"Cascadia Code",Consolas,monospace;line-height:1.7}.writer__sidebar{display:grid;gap:1rem}.writer__type{display:flex;gap:1rem}.writer__type label,.writer-check{display:flex!important;align-items:center;gap:.45rem}.writer__meta{display:grid;gap:.7rem}.writer-skill summary{cursor:pointer;font-weight:700}.writer-skill ol{padding-left:1.25rem;color:var(--muted);font-size:.9rem}.writer-skill p{margin-bottom:0;color:var(--muted);font-size:.85rem}.writer-dropzone{display:grid;place-items:center;min-height:10rem;border:1px dashed var(--border);border-radius:1rem;color:var(--muted);cursor:pointer;text-align:center}.writer-dropzone--small{min-height:5rem}.writer-images{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.writer-images li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:.4rem;font-size:.8rem}.writer-images li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-images button{border:0;background:transparent;color:var(--muted);cursor:pointer}.writer-status{min-height:1.75rem;margin:1rem 0 0;text-align:center}.writer-dialog{width:min(52rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--bg);color:var(--text)}.writer-dialog::backdrop{background:rgba(10,12,18,.55);backdrop-filter:blur(4px)}.writer-dialog>form{display:flex;justify-content:flex-end}.writer-dialog>form button{border:0;background:transparent;color:var(--text);font-size:2rem;cursor:pointer}.writer-dialog .article{box-shadow:none}@media(max-width:900px){.writer__header{align-items:flex-start;flex-direction:column}.writer__actions{justify-content:flex-start}.writer__grid{grid-template-columns:1fr}.writer-card--editor{min-height:45rem}.writer__sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.writer{margin-inline:calc(50% - 50vw);padding-inline:.75rem}.writer__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.writer__title-row,.writer__sidebar{grid-template-columns:1fr}.writer-card--editor{min-height:38rem}.writer-images li{grid-template-columns:1fr auto}.writer-images input{grid-column:1/-1;grid-row:2}}
+  .writer{position:relative;margin-inline:calc(50% - 50vw);padding:clamp(1rem,3vw,2.5rem) max(1rem,calc((100vw - 92rem)/2));background:radial-gradient(circle at 12% 85%,rgba(89,221,214,.28),transparent 31%),radial-gradient(circle at 89% 79%,rgba(255,226,73,.28),transparent 34%);min-height:75vh}.writer__header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}.writer__header h1{margin:0;line-height:1.1}.writer__header p{margin:.2rem 0}.writer__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}.writer-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.55rem .9rem;border:1px solid var(--accent);border-radius:.75rem;background:var(--accent);color:white;cursor:pointer}.writer-button--ghost{border-color:var(--border);background:var(--surface);color:var(--text)}.writer-button--publish{background:#198f7c;border-color:#198f7c}.writer-button:disabled{cursor:wait;opacity:.6}.writer-draft-count{display:inline-grid;place-items:center;min-width:1.35rem;height:1.35rem;margin-left:.35rem;padding:0 .25rem;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,transparent);font-size:.75rem;font-weight:700}.writer__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,22rem);align-items:start;gap:1rem}.writer-card{min-width:0;padding:1rem;border:1px solid rgba(255,255,255,.7);border-radius:1.4rem;background:color-mix(in srgb,var(--surface) 80%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(18px)}fieldset.writer-card{margin:0}.writer-card legend{padding:0 .35rem;color:var(--muted);font-weight:700}.writer-card--editor{display:flex;flex-direction:column;min-height:65rem}.writer__title-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,.35fr);gap:.75rem}.writer label>span{display:block;margin-bottom:.25rem;color:var(--muted);font-size:.85rem}.writer input:not([type=radio]):not([type=checkbox]),.writer textarea{width:100%;padding:.7rem .8rem;border:1px solid var(--border);border-radius:.7rem;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text)}.writer__body{display:flex;flex:1;flex-direction:column;margin-top:.75rem}.writer__body textarea{flex:1;min-height:35rem;resize:vertical;font-family:"Cascadia Code",Consolas,monospace;line-height:1.7}.writer__sidebar{display:grid;gap:1rem}.writer__type{display:flex;gap:1rem}.writer__type label,.writer-check{display:flex!important;align-items:center;gap:.45rem}.writer__meta{display:grid;gap:.7rem}.writer-skill summary{cursor:pointer;font-weight:700}.writer-skill ol{padding-left:1.25rem;color:var(--muted);font-size:.9rem}.writer-skill p{margin-bottom:0;color:var(--muted);font-size:.85rem}.writer-ai{display:grid;gap:.7rem}.writer-ai__skill{justify-self:start;padding:.25rem .55rem;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:.78rem}.writer-ai__skill.is-active{border-color:#2aa88f;background:rgba(42,168,143,.12);color:#137761}.writer-ai__actions{display:flex;flex-wrap:wrap;gap:.4rem}.writer-ai__actions button{min-height:2.35rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:.65rem;background:var(--bg);color:var(--text);cursor:pointer}.writer-ai__actions button:disabled{cursor:wait;opacity:.55}.writer-ai__status{margin:0;color:var(--muted);font-size:.82rem;line-height:1.55}.writer-ai__result{display:grid;gap:.6rem}.writer-ai__result[hidden]{display:none}.writer-ai__result textarea{font-family:"Cascadia Code",Consolas,monospace;font-size:.82rem;line-height:1.6}.writer-dropzone{display:grid;place-items:center;min-height:10rem;border:1px dashed var(--border);border-radius:1rem;color:var(--muted);cursor:pointer;text-align:center}.writer-dropzone--small{min-height:5rem}.writer-images{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.writer-images li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:.4rem;font-size:.8rem}.writer-images li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-images button{border:0;background:transparent;color:var(--muted);cursor:pointer}.writer-status{min-height:1.75rem;margin:1rem 0 0;text-align:center}.writer-dialog{width:min(52rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--bg);color:var(--text)}.writer-dialog::backdrop{background:rgba(10,12,18,.55);backdrop-filter:blur(4px)}.writer-dialog>form{display:flex;justify-content:flex-end}.writer-dialog>form button,.writer-drafts__header form button{border:0;background:transparent;color:var(--text);font-size:2rem;cursor:pointer}.writer-dialog .article{box-shadow:none}.writer-dialog--drafts{width:min(46rem,calc(100% - 2rem))}.writer-drafts__header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}.writer-drafts__header h2{margin:.1rem 0}.writer-drafts__header p{margin:.2rem 0}.writer-draft-list{display:grid;gap:.65rem;margin:1.25rem 0 0;padding:0;list-style:none}.writer-draft-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:.9rem;background:var(--surface)}.writer-draft-item>div:first-child{display:grid;min-width:0;gap:.2rem}.writer-draft-item strong,.writer-draft-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-draft-item span{color:var(--muted);font-size:.8rem}.writer-draft-item>div:last-child{display:flex;gap:.4rem}.writer-draft-item button{min-height:2.35rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:.65rem;background:var(--bg);color:var(--text);cursor:pointer}.writer-draft-item .writer-draft-item__delete{color:#b64747}.writer-drafts__empty{padding:2rem;text-align:center;color:var(--muted)}@media(max-width:900px){.writer__header{align-items:flex-start;flex-direction:column}.writer__actions{justify-content:flex-start}.writer__grid{grid-template-columns:1fr}.writer-card--editor{min-height:45rem}.writer__sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.writer{margin-inline:calc(50% - 50vw);padding-inline:.75rem}.writer__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.writer__title-row,.writer__sidebar{grid-template-columns:1fr}.writer-card--editor{min-height:38rem}.writer-images li{grid-template-columns:1fr auto}.writer-images input{grid-column:1/-1;grid-row:2}.writer-draft-item{align-items:flex-start;flex-direction:column}.writer-draft-item>div:last-child{width:100%}.writer-draft-item button{flex:1}}
 </style>
 </body>
 </html>

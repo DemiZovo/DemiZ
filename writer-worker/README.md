@@ -2,6 +2,8 @@
 
 写作台使用 Cloudflare Workers 免费版托管，并通过 GitHub OAuth 将访问者限制为一个固定的 GitHub 用户 ID。未登录用户不会收到写作台 HTML；发布时，Markdown 与图片会作为同一个 Git commit 写入仓库。
 
+草稿箱使用浏览器 IndexedDB 保存文章字段和图片，不写入 GitHub。AI 写作助手通过 Workers AI binding 调用 Cloudflare 托管模型，可生成大纲、正文或润色结果；只有点击“替换正文”或“追加到正文”后，结果才会进入编辑器。
+
 ## 1. 生成私有写作台资源
 
 ```bash
@@ -38,6 +40,15 @@ npx wrangler secret put SESSION_SECRET
 
 `SESSION_SECRET` 使用密码生成器生成至少 32 字节的随机值。`GITHUB_TOKEN` 使用细粒度令牌，只授予目标仓库的 Contents 读写权限。
 
+根目录 `wrangler.toml` 已包含 Workers AI binding：
+
+```toml
+[ai]
+binding = "AI"
+```
+
+Workers AI 不需要额外的浏览器密钥。AI 请求仍受 GitHub 登录会话和同源检查保护。
+
 ## 4. 部署
 
 在项目根目录执行：
@@ -61,4 +72,6 @@ WRITER_URL=https://<name>.<account>.workers.dev/
 - 每次登录都调用 GitHub `/user` 并比较不可更名的数字用户 ID，而不是用户名。
 - 会话 Cookie 使用 `HttpOnly`、`Secure` 和 `SameSite=Lax`，有效期 12 小时。
 - 发布接口同时检查登录会话和同源请求。
+- AI 接口同样检查登录会话和同源请求；发送给 AI 的写作要求与正文会由 Cloudflare Workers AI 处理。
+- 草稿只存在当前浏览器中，清除站点数据会一并删除草稿。
 - Worker 返回 `noindex` 与严格的 CSP，公开 Pages 构建不包含 `/write`。
