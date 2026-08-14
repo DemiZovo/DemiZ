@@ -1,13 +1,83 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro'; import {sitePath} from '../lib/urls';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { sitePath } from '../lib/urls';
 ---
-<BaseLayout title="搜索" description="搜索技术文章与生活日志" noindex>
-  <section class="hero"><p class="eyebrow">Search</p><h1>中文搜索</h1><label for="search-input">搜索标题、摘要、分类或标签</label><input class="search-input" id="search-input" type="search" autocomplete="off" placeholder="例如：Astro、性能、散步" /></section>
-  <p id="search-status" class="muted" role="status" aria-live="polite">输入关键词开始搜索。</p><div id="search-results" class="grid"></div>
+<BaseLayout title="搜索 | DemiZ" description="搜索 DemiZ 的技术文章与生活日志" noindex>
+  <section class="hero search-hero">
+    <p class="eyebrow">Search</p>
+    <h1>站内搜索</h1>
+    <label for="search-input">搜索标题、摘要、分类、标签或正文</label>
+    <div class="search-control">
+      <input class="search-input" id="search-input" type="search" autocomplete="off" placeholder="例如：Astro、WSL2、生活" />
+      <button class="search-clear" type="button" data-search-clear hidden>清空</button>
+    </div>
+  </section>
+  <p id="search-status" class="muted" role="status" aria-live="polite">正在加载搜索索引…</p>
+  <div id="search-results" class="grid search-results" aria-label="搜索结果"></div>
+  <template id="search-error-template"><button class="secondary-button" type="button" data-search-retry>重试加载</button></template>
+
   <script is:inline define:vars={{ indexUrl: sitePath('/search-index.json') }}>
-    const input = document.querySelector('#search-input'); const results = document.querySelector('#search-results'); const status = document.querySelector('#search-status'); let items=[];
-    const normalize=value=>value.normalize('NFKC').toLocaleLowerCase('zh-CN').replace(/\s+/g,'');
-    fetch(indexUrl).then(r=>r.json()).then(data=>{items=data;}).catch(()=>{status.textContent='搜索索引暂时无法加载。';});
-    input?.addEventListener('input',()=>{const query=normalize(input.value);results.replaceChildren();if(!query){status.textContent='输入关键词开始搜索。';return;}const matched=items.filter(item=>normalize([item.title,item.description,item.category,...item.tags].join(' ')).includes(query));status.textContent=matched.length?`找到 ${matched.length} 条结果。`:'没有找到匹配内容。';for(const item of matched){const article=document.createElement('article');article.className='card';const h=document.createElement('h2');const a=document.createElement('a');a.className='card-link';a.href=item.url;a.textContent=item.title;h.append(a);const p=document.createElement('p');p.textContent=item.description;article.append(h,p);results.append(article);}});
+    const input = document.querySelector('#search-input');
+    const results = document.querySelector('#search-results');
+    const status = document.querySelector('#search-status');
+    const clearButton = document.querySelector('[data-search-clear]');
+    const errorTemplate = document.querySelector('#search-error-template');
+    let items = [];
+    let ready = false;
+    let timer;
+    let activeIndex = -1;
+
+    const normalize = (value) => String(value ?? '').normalize('NFKC').toLocaleLowerCase('zh-CN').replace(/\s+/g, ' ').trim();
+    const termsFor = (query) => normalize(query).split(' ').filter(Boolean);
+    const scoreItem = (item, terms) => {
+      const title = normalize(item.title); const tags = normalize(item.tags.join(' '));
+      const category = normalize(item.category); const description = normalize(item.description);
+      const body = normalize(item.searchableText);
+      if (!terms.every(term => [title, tags, category, description, body].some(value => value.includes(term)))) return -1;
+      return terms.reduce((score, term) => score +
+        (title === term ? 100 : title.startsWith(term) ? 70 : title.includes(term) ? 50 : 0) +
+        (tags.includes(term) ? 30 : 0) + (category.includes(term) ? 25 : 0) +
+        (description.includes(term) ? 15 : 0) + (body.includes(term) ? 5 : 0), 0);
+    };
+    const highlight = (text, terms) => {
+      const fragment = document.createDocumentFragment(); let remaining = String(text);
+      while (remaining) {
+        const normalized = normalize(remaining); let best = null;
+        for (const term of terms) { const index = normalized.indexOf(term); if (index >= 0 && (!best || index < best.index)) best = { index, length: term.length }; }
+        if (!best) { fragment.append(remaining); break; }
+        if (best.index) fragment.append(remaining.slice(0, best.index));
+        const mark = document.createElement('mark'); mark.textContent = remaining.slice(best.index, best.index + best.length); fragment.append(mark);
+        remaining = remaining.slice(best.index + best.length);
+      }
+      return fragment;
+    };
+    const updateSelection = (links) => links.forEach((link, index) => link.classList.toggle('is-active', index === activeIndex));
+    const render = () => {
+      if (!(input instanceof HTMLInputElement) || !results || !status) return;
+      const query = input.value; const terms = termsFor(query); results.replaceChildren(); activeIndex = -1;
+      clearButton?.toggleAttribute('hidden', !query);
+      const url = new URL(location.href); query ? url.searchParams.set('q', query) : url.searchParams.delete('q'); history.replaceState(null, '', url);
+      if (!ready) return;
+      if (!terms.length) { status.textContent = '输入关键词开始搜索。'; return; }
+      const matched = items.map(item => ({ item, score: scoreItem(item, terms) })).filter(result => result.score >= 0)
+        .sort((a, b) => b.score - a.score || Date.parse(b.item.published) - Date.parse(a.item.published)).slice(0, 24);
+      status.textContent = matched.length ? `找到 ${matched.length} 条结果。` : '没有找到匹配内容，试试更短的关键词或标签。';
+      for (const { item } of matched) {
+        const article = document.createElement('article'); article.className = 'card search-result';
+        const meta = document.createElement('p'); meta.className = 'meta'; meta.textContent = `${item.collection === 'blog' ? '技术文章' : '生活日志'} · ${new Date(item.published).toLocaleDateString('zh-CN')}`;
+        const heading = document.createElement('h2'); const link = document.createElement('a'); link.className = 'card-link'; link.href = item.url; link.append(highlight(item.title, terms)); heading.append(link);
+        const description = document.createElement('p'); description.append(highlight(item.description, terms)); article.append(meta, heading, description); results.append(article);
+      }
+    };
+    const load = async () => {
+      if (!status || !results) return; status.textContent = '正在加载搜索索引…'; results.replaceChildren(); ready = false;
+      try { const response = await fetch(indexUrl); if (!response.ok) throw new Error(); items = await response.json(); ready = true; render(); }
+      catch { status.textContent = '搜索索引暂时无法加载。'; const retry = errorTemplate?.content.cloneNode(true); if (retry) results.append(retry); results.querySelector('[data-search-retry]')?.addEventListener('click', load); }
+    };
+    input?.addEventListener('input', () => { window.clearTimeout(timer); timer = window.setTimeout(render, 180); });
+    input?.addEventListener('keydown', event => { const links = [...results.querySelectorAll('.card-link')]; if (!links.length) return; if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); activeIndex = (activeIndex + (event.key === 'ArrowDown' ? 1 : -1) + links.length) % links.length; updateSelection(links); } else if (event.key === 'Enter' && activeIndex >= 0) { event.preventDefault(); links[activeIndex].click(); } });
+    clearButton?.addEventListener('click', () => { input.value = ''; render(); input.focus(); });
+    if (input instanceof HTMLInputElement) input.value = new URL(location.href).searchParams.get('q') ?? '';
+    load();
   </script>
 </BaseLayout>

@@ -52,9 +52,18 @@ for (const file of htmlFiles) {
   }
 }
 
-for (const required of ['index.html', '404.html', 'about/index.html', 'guestbook/index.html', 'privacy/index.html', 'search/index.html', 'rss.xml', 'search-index.json', 'sitemap-index.xml']) {
+for (const required of ['index.html', '404.html', 'about/index.html', 'guestbook/index.html', 'privacy/index.html', 'search/index.html', 'rss.xml', 'search-index.json', 'sitemap-index.xml', 'favicon.svg', 'images/brand/default-og.svg']) {
   try { await access(join(dist, required)); }
   catch { failures.push(`missing required output: ${required}`); }
+}
+
+const home = await readFile(join(dist, 'index.html'), 'utf8');
+for (const marker of ['application/ld+json', 'og:image', 'twitter:card', '/images/brand/default-og.svg']) {
+  if (!home.includes(marker)) failures.push(`index.html: missing SEO marker ${marker}`);
+}
+const searchIndex = JSON.parse(await readFile(join(dist, 'search-index.json'), 'utf8'));
+if (!Array.isArray(searchIndex) || searchIndex.some((item) => !item.collection || typeof item.searchableText !== 'string')) {
+  failures.push('search-index.json: missing collection or searchableText fields');
 }
 
 if (failures.length) {

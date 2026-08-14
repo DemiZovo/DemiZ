@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { unified } from '@astrojs/markdown-remark';
 
 import { siteConfig } from './src/config/site';
 
@@ -13,8 +14,9 @@ export default defineConfig({
   trailingSlash: 'always',
   integrations: [sitemap({ filter: (page) => !page.includes('/draft-preview/') && !page.endsWith('/write/') })],
   markdown: {
-    rehypePlugins: [
-      () => (tree) => {
+    processor: unified({
+      rehypePlugins: [
+        () => (tree) => {
         const visit = (node: any) => {
           if (node?.properties) {
             for (const attribute of ['src', 'href']) {
@@ -27,7 +29,8 @@ export default defineConfig({
           node?.children?.forEach(visit);
         };
         visit(tree);
-      },
-    ],
+        },
+      ],
+    }),
   },
 });

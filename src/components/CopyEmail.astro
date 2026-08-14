@@ -19,24 +19,11 @@ const { email } = Astro.props;
     let timer: number | undefined;
     if (!button || !label || !status || !email) continue;
 
-    const fallbackCopy = () => {
-      const input = document.createElement('textarea');
-      input.value = email;
-      input.setAttribute('readonly', '');
-      input.style.position = 'fixed';
-      input.style.opacity = '0';
-      document.body.append(input);
-      input.select();
-      const copied = document.execCommand('copy');
-      input.remove();
-      if (!copied) throw new Error('Copy command failed');
-    };
-
     button.addEventListener('click', async () => {
       window.clearTimeout(timer);
       try {
-        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(email);
-        else fallbackCopy();
+        if (!navigator.clipboard || !window.isSecureContext) throw new Error('Clipboard unavailable');
+        await navigator.clipboard.writeText(email);
         control.classList.add('is-copied');
         label.textContent = '已复制邮箱';
         status.textContent = `${email} 已复制到剪贴板`;

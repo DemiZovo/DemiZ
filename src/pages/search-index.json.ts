@@ -9,7 +9,15 @@ export const GET: APIRoute = async () => {
     description: entry.data.description,
     category: entry.collection === 'blog' ? entry.data.category : '生活',
     tags: entry.data.tags,
+    collection: entry.collection,
     published: entry.data.published.toISOString(),
     url: sitePath(entryPath(entry)),
+    searchableText: (entry.body ?? '')
+      .replace(/^---[\s\S]*?---/, '')
+      .replace(/```[\s\S]*?```/g, ' ')
+      .replace(/`[^`]*`|<[^>]+>|[#>*_~\[\]()!-]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 6000),
   }))), { headers: { 'Content-Type': 'application/json; charset=utf-8' } });
 };

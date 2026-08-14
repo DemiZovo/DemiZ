@@ -5,6 +5,7 @@ export interface SiteConfig {
   author: { name: string; bio: string; github: string; email: string; leetcode: string };
   locale: string;
   postsPerPage: number;
+  defaultSocialImage: string;
 }
 
 export const siteConfig = {
@@ -20,4 +21,5 @@ export const siteConfig = {
   },
   locale: 'zh-CN',
   postsPerPage: 10,
+  defaultSocialImage: '/images/brand/default-og.svg',
 } satisfies SiteConfig;
