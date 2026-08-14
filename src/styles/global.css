@@ -61,7 +61,9 @@ button,input,textarea,select{font:inherit}
 .brand{font-size:clamp(1.25rem,2vw,1.6rem);color:var(--accent)}
 .primary-nav{min-width:0}
 .primary-nav ul{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.2rem;width:100%}
-.primary-nav a,.more-menu-list a,.more-menu summary{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:.45rem;color:var(--muted);text-decoration:none;white-space:nowrap}
+.site-header .primary-nav a,.more-menu-list a,.more-menu summary{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:.45rem;color:var(--muted);text-decoration:none;white-space:nowrap}
+.site-header .primary-nav a>svg{display:block;flex:0 0 auto}
+.site-header .primary-nav a>span{display:inline;flex:0 0 auto}
 .primary-nav a{min-height:2.9rem;padding:.5rem .4rem;border-radius:.7rem;font-weight:550}
 .primary-nav svg,.more-menu svg,.tool-button svg{width:1.3rem;height:1.3rem;flex:0 0 auto;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .primary-nav a:hover,.more-menu-list a:hover,.tool-button:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
