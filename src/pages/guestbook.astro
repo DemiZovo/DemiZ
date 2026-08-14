@@ -1,0 +1,23 @@
+---
+import Giscus from '../components/Giscus.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { siteConfig } from '../config/site';
+---
+
+<BaseLayout
+  title={`访客留言 | ${siteConfig.name}`}
+  description={`在 ${siteConfig.name} 的访客留言板分享想法、建议或问候。`}
+>
+  <article class="article guestbook">
+    <p class="eyebrow">Guestbook</p>
+    <h1>访客留言</h1>
+    <p class="guestbook-intro">
+      欢迎留下想法、建议或简单问候。留言由 GitHub Discussions 托管，发布前需要登录 GitHub。
+    </p>
+    <aside class="guestbook-note" aria-label="留言提示">
+      请勿公开邮箱、电话等个人信息。留言内容会公开展示，站长可在 GitHub 中管理或删除不合适的内容。
+    </aside>
+    <Giscus />
+    <noscript><p class="empty">留言区需要启用 JavaScript 才能加载。</p></noscript>
+  </article>
+</BaseLayout>

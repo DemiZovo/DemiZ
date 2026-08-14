@@ -26,6 +26,8 @@ jobs:
         env:
           UMAMI_WEBSITE_ID: ${{ vars.UMAMI_WEBSITE_ID }}
           UMAMI_SCRIPT_URL: ${{ vars.UMAMI_SCRIPT_URL }}
+          SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
         run: |
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           repo="${GITHUB_REPOSITORY#*/}"
@@ -42,6 +44,10 @@ jobs:
             echo "PUBLIC_ANALYTICS_SCRIPT_URL=${UMAMI_SCRIPT_URL:-https://cloud.umami.is/script.js}" >> "$GITHUB_ENV"
           else
             echo "PUBLIC_ANALYTICS_ENABLED=false" >> "$GITHUB_ENV"
+          fi
+          if [[ -n "$SUPABASE_URL" && -n "$SUPABASE_PUBLISHABLE_KEY" ]]; then
+            echo "PUBLIC_SUPABASE_URL=$SUPABASE_URL" >> "$GITHUB_ENV"
+            echo "PUBLIC_SUPABASE_PUBLISHABLE_KEY=$SUPABASE_PUBLISHABLE_KEY" >> "$GITHUB_ENV"
           fi
       - name: Type and content checks
         run: npm run check:content

@@ -1,0 +1,53 @@
+---
+import { guestbookConfig } from '../config/guestbook';
+
+const { repo, repoId, category, categoryId } = guestbookConfig;
+---
+
+<div class="giscus-shell" data-giscus-shell>
+  <p class="giscus-loading" data-giscus-loading>留言区正在加载…</p>
+</div>
+
+<script
+  is:inline
+  define:vars={{ repo, repoId, category, categoryId }}
+>
+  const shell = document.querySelector('[data-giscus-shell]');
+
+  if (shell) {
+    const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+    const script = document.createElement('script');
+    script.src = 'https://giscus.app/client.js';
+    script.async = true;
+    script.crossOrigin = 'anonymous';
+    script.setAttribute('data-repo', repo);
+    script.setAttribute('data-repo-id', repoId);
+    script.setAttribute('data-category', category);
+    script.setAttribute('data-category-id', categoryId);
+    script.setAttribute('data-mapping', 'specific');
+    script.setAttribute('data-term', '访客留言板');
+    script.setAttribute('data-strict', '1');
+    script.setAttribute('data-reactions-enabled', '1');
+    script.setAttribute('data-emit-metadata', '0');
+    script.setAttribute('data-input-position', 'top');
+    script.setAttribute('data-theme', theme);
+    script.setAttribute('data-lang', 'zh-CN');
+    script.setAttribute('data-loading', 'lazy');
+    shell.append(script);
+
+    window.addEventListener('message', (event) => {
+      if (event.origin === 'https://giscus.app' && event.data?.giscus) {
+        shell.querySelector('[data-giscus-loading]')?.remove();
+      }
+    });
+
+    const observer = new MutationObserver(() => {
+      const nextTheme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+      const frame = document.querySelector('iframe.giscus-frame');
+      if (frame instanceof HTMLIFrameElement) {
+        frame.contentWindow?.postMessage({ giscus: { setConfig: { theme: nextTheme } } }, 'https://giscus.app');
+      }
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  }
+</script>

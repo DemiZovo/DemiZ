@@ -52,7 +52,7 @@ for (const file of htmlFiles) {
   }
 }
 
-for (const required of ['index.html', '404.html', 'about/index.html', 'privacy/index.html', 'search/index.html', 'rss.xml', 'search-index.json', 'sitemap-index.xml']) {
+for (const required of ['index.html', '404.html', 'about/index.html', 'guestbook/index.html', 'privacy/index.html', 'search/index.html', 'rss.xml', 'search-index.json', 'sitemap-index.xml']) {
   try { await access(join(dist, required)); }
   catch { failures.push(`missing required output: ${required}`); }
 }

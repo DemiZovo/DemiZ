@@ -4,7 +4,7 @@ import { sitePath } from '../lib/urls';
 const { pathname } = Astro.props;
 const links: [string, string][] = [
   ['/', '首页'], ['/blog/', '技术博客'], ['/projects/', '代码项目'], ['/life/', '生活日志'],
-  ['/archives/', '归档'], ['/tags/', '标签'], ['/about/', '关于我'], ['/search/', '搜索'],
+  ['/archives/', '归档'], ['/tags/', '标签'], ['/guestbook/', '留言'], ['/about/', '关于我'], ['/search/', '搜索'],
 ];
 const current = (href: string) => href === '/' ? pathname === sitePath('/') : pathname.startsWith(sitePath(href));
 ---

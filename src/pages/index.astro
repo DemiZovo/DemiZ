@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import HomeLikeButton from '../components/HomeLikeButton.astro';
 import { entryPath, getPublicContent } from '../lib/content';
 import { siteConfig } from '../config/site';
 import { sitePath } from '../lib/urls';
@@ -13,6 +14,7 @@ const entries = (await getPublicContent()).slice(0, 6);
       <h1>{siteConfig.name}</h1>
       <p>{siteConfig.description}</p>
       <p><a href={siteConfig.author.github}>GitHub</a> · <a href={siteConfig.author.leetcode}>LeetCode</a> · <a href={sitePath('/blog/')}>阅读技术文章</a></p>
+      <HomeLikeButton />
     </div>
   </section>
   <section aria-labelledby="recent">

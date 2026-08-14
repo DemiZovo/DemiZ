@@ -612,6 +612,18 @@ export const projects: LocalProject[] = [
 - `order` 越小，显示位置越靠前。
 - 构建时会尝试读取 Stars、语言等 GitHub 数据；请求失败时仍会显示本地配置。
 
+## 访客留言
+
+访客留言页位于 `/guestbook/`，使用 Giscus 将公开留言保存到 GitHub Discussions 的 `General` 分类。访客需要登录 GitHub 才能发布留言，网站本身不保存访客账号信息。
+
+首次启用前，请确认：
+
+1. 仓库 **Settings → General → Features** 中已经开启 Discussions。
+2. 已在 <https://github.com/apps/giscus> 为 `DemiZovo/DemiZ` 安装 Giscus App。
+3. `src/config/guestbook.ts` 中的仓库及分类 ID 与当前仓库一致。
+
+留言可以直接在仓库的 Discussions 页面中管理、隐藏或删除。更换仓库或分类时，需要同步更新 `src/config/guestbook.ts`。
+
 ## 检查并发布
 
 修改内容后先运行：

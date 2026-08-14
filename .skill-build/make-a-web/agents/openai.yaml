@@ -1,0 +1,4 @@
+interface:
+  display_name: "make-a-web"
+  short_description: "Build adaptable websites through guided choices"
+  default_prompt: "Use $make-a-web to plan and build a website by confirming its style, features, content, and deployment target."

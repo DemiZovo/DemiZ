@@ -1,0 +1,103 @@
+---
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL?.replace(/\/$/, '') ?? '';
+const publishableKey = import.meta.env.PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
+const configured = Boolean(supabaseUrl && publishableKey);
+---
+
+<div
+  class="home-like"
+  data-home-like
+  data-rpc-url={configured ? `${supabaseUrl}/rest/v1/rpc` : ''}
+  data-publishable-key={publishableKey}
+>
+  <button
+    class="home-like-button"
+    type="button"
+    aria-label={configured ? '为主页点赞，正在读取累计点赞数' : '主页点赞暂不可用'}
+    aria-describedby="home-like-status"
+    disabled={!configured}
+    data-home-like-button
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 20.4 10.55 19.1C5.4 14.5 2 11.45 2 7.7 2 4.65 4.4 2.25 7.45 2.25c1.72 0 3.38.8 4.55 2.05a6.2 6.2 0 0 1 4.55-2.05C19.6 2.25 22 4.65 22 7.7c0 3.75-3.4 6.8-8.55 11.42L12 20.4Z" />
+    </svg>
+  </button>
+  <span class="home-like-tooltip" id="home-like-status" role="status" aria-live="polite" data-home-like-status>
+    {configured ? '正在读取点赞数…' : '点赞暂不可用'}
+  </span>
+</div>
+
+<script>
+  const controls = document.querySelectorAll<HTMLElement>('[data-home-like]');
+
+  for (const control of controls) {
+    const button = control.querySelector<HTMLButtonElement>('[data-home-like-button]');
+    const status = control.querySelector<HTMLElement>('[data-home-like-status]');
+    const rpcUrl = control.dataset.rpcUrl;
+    const publishableKey = control.dataset.publishableKey;
+    let count = '';
+    let hideTimer: number | undefined;
+
+    if (!button || !status || !rpcUrl || !publishableKey) continue;
+
+    const parseCount = (value: unknown) => {
+      const normalized = String(value);
+      return /^\d+$/.test(normalized) ? normalized : null;
+    };
+
+    const updateCount = (nextCount: string) => {
+      count = nextCount;
+      status.textContent = `累计 ${count} 次点赞`;
+      button.setAttribute('aria-label', `为主页点赞，当前累计 ${count} 次`);
+    };
+
+    const callRpc = async (name: 'get_home_like_count' | 'increment_home_like_count') => {
+      const response = await fetch(`${rpcUrl}/${name}`, {
+        method: 'POST',
+        headers: {
+          apikey: publishableKey,
+          'Content-Type': 'application/json',
+        },
+        body: '{}',
+      });
+
+      if (!response.ok) throw new Error(`Like RPC failed with ${response.status}`);
+      const nextCount = parseCount(await response.json());
+      if (nextCount === null) throw new Error('Like RPC returned an invalid count');
+      return nextCount;
+    };
+
+    const revealOnTouch = () => {
+      if (!matchMedia('(hover: none)').matches) return;
+      window.clearTimeout(hideTimer);
+      control.classList.add('is-visible');
+      hideTimer = window.setTimeout(() => control.classList.remove('is-visible'), 2200);
+    };
+
+    try {
+      updateCount(await callRpc('get_home_like_count'));
+      button.disabled = false;
+    } catch {
+      status.textContent = '暂时无法读取，点击可重试';
+      button.setAttribute('aria-label', '为主页点赞，当前无法读取累计数');
+      button.disabled = false;
+    }
+
+    button.addEventListener('click', async () => {
+      button.disabled = true;
+      status.textContent = '正在点赞…';
+
+      try {
+        updateCount(await callRpc('increment_home_like_count'));
+        button.classList.remove('is-liked');
+        void button.offsetWidth;
+        button.classList.add('is-liked');
+        revealOnTouch();
+      } catch {
+        status.textContent = count ? `点赞失败，仍为 ${count} 次` : '点赞失败，请重试';
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+</script>
