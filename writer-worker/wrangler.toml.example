@@ -8,6 +8,9 @@ GITHUB_BRANCH = "main"
 GITHUB_CLIENT_ID = "GITHUB_OAUTH_CLIENT_ID"
 ALLOWED_GITHUB_USER_ID = "12345678"
 
+[secrets]
+required = ["GITHUB_CLIENT_SECRET", "GITHUB_TOKEN", "SESSION_SECRET"]
+
 [assets]
 directory = "./public"
 binding = "ASSETS"
