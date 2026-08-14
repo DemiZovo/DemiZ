@@ -1,0 +1,247 @@
+---
+import '../styles/global.css';
+---
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <meta name="description" content="DemiZ 的私有 Markdown 写作台" />
+  <title>写作台 | DemiZ</title>
+  <script is:inline>
+    try {
+      const saved = localStorage.getItem('theme');
+      const theme = saved === 'light' || saved === 'dark' ? saved : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.style.colorScheme = theme;
+    } catch {}
+  </script>
+</head>
+<body>
+  <main>
+  <section class="writer" data-writer>
+    <header class="writer__header">
+      <div>
+        <p class="eyebrow">Writer</p>
+        <h1>写点什么</h1>
+        <p class="muted">文章和图片会一起提交，构建通过后自动发布。</p>
+      </div>
+      <div class="writer__actions">
+        <label class="writer-button writer-button--ghost">
+          导入 MD
+          <input type="file" accept=".md,.mdx,text/markdown" data-import hidden />
+        </label>
+        <button class="writer-button writer-button--ghost" type="button" data-preview>预览</button>
+        <button class="writer-button writer-button--ghost" type="button" data-download>下载 MD</button>
+        <button class="writer-button writer-button--ghost" type="button" data-skill>导入 DemiZ 写作 Skill</button>
+        <a class="writer-button writer-button--ghost" href="/logout">退出</a>
+        <button class="writer-button writer-button--publish" type="button" data-publish>发布</button>
+      </div>
+    </header>
+
+    <form class="writer__grid" data-form>
+      <div class="writer-card writer-card--editor">
+        <div class="writer__title-row">
+          <label><span>标题</span><input name="title" required maxlength="100" placeholder="文章标题" /></label>
+          <label><span>Slug</span><input name="slug" required pattern="[a-z0-9]+(?:-[a-z0-9]+)*" placeholder="my-article" /></label>
+        </div>
+        <label class="writer__body"><span>Markdown 内容</span><textarea name="body" required placeholder="从这里开始写作……"></textarea></label>
+      </div>
+
+      <aside class="writer__sidebar">
+        <fieldset class="writer-card writer__type">
+          <legend>文章类型</legend>
+          <label><input type="radio" name="collection" value="blog" checked /> 技术博客</label>
+          <label><input type="radio" name="collection" value="life" /> 生活随笔</label>
+        </fieldset>
+
+        <fieldset class="writer-card writer__meta">
+          <legend>元信息</legend>
+          <label><span>摘要</span><textarea name="description" required maxlength="240" rows="3" placeholder="为这篇文章写一段简短摘要"></textarea></label>
+          <label><span>标签</span><input name="tags" placeholder="Astro, TypeScript" /></label>
+          <label data-blog-field><span>分类</span><input name="category" value="未分类" /></label>
+          <label><span>发布日期</span><input name="published" type="date" required /></label>
+          <label><span>更新日期（可选）</span><input name="updated" type="date" /></label>
+          <label class="writer-check"><input name="draft" type="checkbox" checked /> 保存为草稿</label>
+          <label class="writer-check"><input name="featured" type="checkbox" /> 设为精选</label>
+          <label class="writer-check" data-blog-field><input name="toc" type="checkbox" checked /> 显示目录</label>
+        </fieldset>
+
+        <details class="writer-card writer-skill" data-blog-field data-skill-guide>
+          <summary>DemiZ 写作规范</summary>
+          <ol>
+            <li>先说明为什么，再说明怎么做。</li>
+            <li>使用自然、清晰、克制的简体中文。</li>
+            <li>短段落，每节只处理一个核心问题。</li>
+            <li>事实、经验和建议需要明确区分。</li>
+            <li>代码块注明语言，命令和路径使用行内代码。</li>
+            <li>记录验证方式、限制和容易踩坑的地方。</li>
+          </ol>
+          <p>默认：草稿、非精选；存在多个有效章节时开启目录。</p>
+        </details>
+
+        <fieldset class="writer-card">
+          <legend><span data-image-title>正文图片</span></legend>
+          <label class="writer-dropzone writer-dropzone--small">
+            <span>＋ 添加图片</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/avif" multiple data-images hidden />
+          </label>
+          <ul class="writer-images" data-image-list></ul>
+        </fieldset>
+      </aside>
+    </form>
+    <p class="writer-status" role="status" aria-live="polite" data-status></p>
+  </section>
+
+  <dialog class="writer-dialog" data-dialog>
+    <form method="dialog"><button aria-label="关闭预览">×</button></form>
+    <article class="article" data-preview-output></article>
+  </dialog>
+  </main>
+
+<script>
+  type Collection = 'blog' | 'life';
+  type ImageEntry = { file: File; alt: string; caption: string };
+  const root = document.querySelector<HTMLElement>('[data-writer]');
+  const form = root?.querySelector<HTMLFormElement>('[data-form]') as HTMLFormElement;
+  if (!root || !form) throw new Error('Writer UI is unavailable');
+
+  const $ = <T extends Element>(selector: string) => root.querySelector<T>(selector);
+  const status = $('[data-status]') as HTMLElement;
+  const imageInput = $('[data-images]') as HTMLInputElement;
+  let images: ImageEntry[] = [];
+  const today = new Date().toISOString().slice(0, 10);
+  (form.elements.namedItem('published') as HTMLInputElement).value = today;
+
+  const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]!));
+  const yamlString = (value: string) => JSON.stringify(value.trim());
+  const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  const collection = () => (new FormData(form).get('collection') as Collection) || 'blog';
+  const assetRoot = () => `/images/${collection()}/${(form.elements.namedItem('slug') as HTMLInputElement).value.trim()}`;
+  const safeName = (name: string, index: number) => {
+    const extension = name.split('.').pop()?.toLowerCase().replace('jpeg', 'jpg') || 'webp';
+    const stem = slugify(name.replace(/\.[^.]+$/, '')) || `image-${index + 1}`;
+    return `${stem}.${extension}`;
+  };
+
+  function buildMarkdown() {
+    const data = new FormData(form);
+    const kind = collection();
+    const slug = String(data.get('slug') || '').trim();
+    const tags = String(data.get('tags') || '').split(',').map((tag) => tag.trim()).filter(Boolean);
+    const lines = ['---', `title: ${yamlString(String(data.get('title') || ''))}`, `description: ${yamlString(String(data.get('description') || ''))}`, `slug: ${slug}`, `published: ${data.get('published')}`];
+    if (data.get('updated')) lines.push(`updated: ${data.get('updated')}`);
+    if (kind === 'blog') lines.push(`category: ${yamlString(String(data.get('category') || '未分类'))}`);
+    lines.push('tags:', ...tags.map((tag) => `  - ${yamlString(tag)}`));
+    if (kind === 'life') {
+      if (!images.length) lines.push('gallery: []');
+      else lines.push('gallery:');
+      images.forEach((image, index) => {
+        lines.push(`  - src: ${assetRoot()}/${safeName(image.file.name, index)}`);
+        lines.push(`    alt: ${yamlString(image.alt || `生活记录图片 ${index + 1}`)}`);
+        if (image.caption) lines.push(`    caption: ${yamlString(image.caption)}`);
+      });
+    }
+    lines.push(`draft: ${data.has('draft')}`, `featured: ${data.has('featured')}`);
+    if (kind === 'blog') lines.push(`toc: ${data.has('toc')}`);
+    return `${lines.join('\n')}\n---\n\n${String(data.get('body') || '').trim()}\n`;
+  }
+
+  function renderImages() {
+    const list = $('[data-image-list]') as HTMLUListElement;
+    list.replaceChildren(...images.map((entry, index) => {
+      const item = document.createElement('li');
+      item.innerHTML = `<span>${escapeHtml(entry.file.name)}</span><input aria-label="图片替代文字" placeholder="图片说明" value="${escapeHtml(entry.alt)}"><button type="button" aria-label="移除图片">×</button>`;
+      item.querySelector('input')?.addEventListener('input', (event) => entry.alt = (event.target as HTMLInputElement).value);
+      item.querySelector('button')?.addEventListener('click', () => { images.splice(index, 1); renderImages(); });
+      return item;
+    }));
+  }
+
+  form.addEventListener('change', (event) => {
+    if ((event.target as HTMLInputElement).name !== 'collection') return;
+    const isBlog = collection() === 'blog';
+    root.querySelectorAll<HTMLElement>('[data-blog-field]').forEach((field) => field.hidden = !isBlog);
+    ($('[data-image-title]') as HTMLElement).textContent = isBlog ? '正文图片' : '相册图片';
+  });
+  (form.elements.namedItem('title') as HTMLInputElement).addEventListener('input', (event) => {
+    const slug = form.elements.namedItem('slug') as HTMLInputElement;
+    if (!slug.dataset.edited) slug.value = slugify((event.target as HTMLInputElement).value);
+  });
+  (form.elements.namedItem('slug') as HTMLInputElement).addEventListener('input', (event) => (event.target as HTMLInputElement).dataset.edited = 'true');
+  imageInput.addEventListener('change', () => { images.push(...Array.from(imageInput.files || []).map((file) => ({ file, alt: '', caption: '' }))); renderImages(); imageInput.value = ''; });
+
+  $('[data-skill]')?.addEventListener('click', () => {
+    if (collection() !== 'blog') {
+      (form.elements.namedItem('collection') as RadioNodeList).value = 'blog';
+      form.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    (form.elements.namedItem('draft') as HTMLInputElement).checked = true;
+    (form.elements.namedItem('featured') as HTMLInputElement).checked = false;
+    (form.elements.namedItem('toc') as HTMLInputElement).checked = true;
+    const body = form.elements.namedItem('body') as HTMLTextAreaElement;
+    if (!body.value.trim()) body.value = `简短说明问题背景，以及为什么需要处理这个问题。\n\n## 目标与约束\n\n说明目标、环境和已知限制。\n\n## 方案选择\n\n解释采用该方案的原因。\n\n## 实现过程\n\n记录关键步骤和代码。\n\n## 验证与限制\n\n记录验证方式、容易踩坑的地方和方案边界。\n\n## 总结\n\n保留可以迁移到其他项目的经验。`;
+    const guide = $('[data-skill-guide]') as HTMLDetailsElement;
+    guide.open = true;
+    guide.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
+    status.textContent = '已导入 DemiZ 写作 Skill：载入文章结构与默认发布规则。';
+  });
+
+  $('[data-download]')?.addEventListener('click', () => {
+    if (!form.reportValidity()) return;
+    const blob = new Blob([buildMarkdown()], { type: 'text/markdown;charset=utf-8' });
+    const link = Object.assign(document.createElement('a'), { href: URL.createObjectURL(blob), download: `${(form.elements.namedItem('slug') as HTMLInputElement).value}.md` });
+    link.click(); URL.revokeObjectURL(link.href);
+  });
+  $('[data-import]')?.addEventListener('change', async (event) => {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    const source = await file.text();
+    const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+    (form.elements.namedItem('body') as HTMLTextAreaElement).value = match ? (match[2] || '').trim() : source;
+    status.textContent = '正文已导入；请检查右侧元信息。';
+  });
+  $('[data-preview]')?.addEventListener('click', () => {
+    const body = String(new FormData(form).get('body') || '');
+    const output = document.querySelector<HTMLElement>('[data-preview-output]')!;
+    output.innerHTML = body.split(/\n{2,}/).map((block) => {
+      const heading = block.match(/^(#{1,4})\s+(.+)$/);
+      if (heading) {
+        const level = (heading[1] || '#').length;
+        return `<h${level}>${escapeHtml(heading[2] || '')}</h${level}>`;
+      }
+      if (block.startsWith('```')) return `<pre><code>${escapeHtml(block.replace(/^```[^\n]*\n?|```$/g, ''))}</code></pre>`;
+      return `<p>${escapeHtml(block).replace(/\n/g, '<br>')}</p>`;
+    }).join('');
+    (document.querySelector('[data-dialog]') as HTMLDialogElement).showModal();
+  });
+
+  const toBase64 = (file: File) => new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1] || ''); reader.onerror = reject; reader.readAsDataURL(file);
+  });
+  $('[data-publish]')?.addEventListener('click', async () => {
+    if (!form.reportValidity()) return;
+    const button = $('[data-publish]') as HTMLButtonElement;
+    button.disabled = true; status.textContent = '正在提交文章与图片……';
+    try {
+      const slug = (form.elements.namedItem('slug') as HTMLInputElement).value;
+      const kind = collection();
+      const files = [] as Array<{ path: string; content: string }>;
+      for (const [index, image] of images.entries()) files.push({ path: `public/images/${kind}/${slug}/${safeName(image.file.name, index)}`, content: await toBase64(image.file) });
+      const response = await fetch('/api/publish', { method: 'POST', credentials: 'same-origin', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ collection: kind, slug, markdown: buildMarkdown(), files }) });
+      if (response.status === 401) { location.href = '/login'; return; }
+      const result = await response.json() as { message?: string; commitUrl?: string };
+      if (!response.ok) throw new Error(result.message || '发布失败');
+      status.innerHTML = result.commitUrl ? `已提交：<a href="${escapeHtml(result.commitUrl)}" target="_blank" rel="noreferrer">查看提交</a>` : '文章已提交。';
+    } catch (error) { status.textContent = error instanceof Error ? error.message : '发布失败，请稍后重试。'; }
+    finally { button.disabled = false; }
+  });
+</script>
+
+<style>
+  .writer{position:relative;margin-inline:calc(50% - 50vw);padding:clamp(1rem,3vw,2.5rem) max(1rem,calc((100vw - 92rem)/2));background:radial-gradient(circle at 12% 85%,rgba(89,221,214,.28),transparent 31%),radial-gradient(circle at 89% 79%,rgba(255,226,73,.28),transparent 34%);min-height:75vh}.writer__header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}.writer__header h1{margin:0;line-height:1.1}.writer__header p{margin:.2rem 0}.writer__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}.writer-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.55rem .9rem;border:1px solid var(--accent);border-radius:.75rem;background:var(--accent);color:white;cursor:pointer}.writer-button--ghost{border-color:var(--border);background:var(--surface);color:var(--text)}.writer-button--publish{background:#198f7c;border-color:#198f7c}.writer-button:disabled{cursor:wait;opacity:.6}.writer__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,22rem);align-items:start;gap:1rem}.writer-card{min-width:0;padding:1rem;border:1px solid rgba(255,255,255,.7);border-radius:1.4rem;background:color-mix(in srgb,var(--surface) 80%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(18px)}fieldset.writer-card{margin:0}.writer-card legend{padding:0 .35rem;color:var(--muted);font-weight:700}.writer-card--editor{display:flex;flex-direction:column;min-height:65rem}.writer__title-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,.35fr);gap:.75rem}.writer label>span{display:block;margin-bottom:.25rem;color:var(--muted);font-size:.85rem}.writer input:not([type=radio]):not([type=checkbox]),.writer textarea{width:100%;padding:.7rem .8rem;border:1px solid var(--border);border-radius:.7rem;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text)}.writer__body{display:flex;flex:1;flex-direction:column;margin-top:.75rem}.writer__body textarea{flex:1;min-height:35rem;resize:vertical;font-family:"Cascadia Code",Consolas,monospace;line-height:1.7}.writer__sidebar{display:grid;gap:1rem}.writer__type{display:flex;gap:1rem}.writer__type label,.writer-check{display:flex!important;align-items:center;gap:.45rem}.writer__meta{display:grid;gap:.7rem}.writer-skill summary{cursor:pointer;font-weight:700}.writer-skill ol{padding-left:1.25rem;color:var(--muted);font-size:.9rem}.writer-skill p{margin-bottom:0;color:var(--muted);font-size:.85rem}.writer-dropzone{display:grid;place-items:center;min-height:10rem;border:1px dashed var(--border);border-radius:1rem;color:var(--muted);cursor:pointer;text-align:center}.writer-dropzone--small{min-height:5rem}.writer-images{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.writer-images li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:.4rem;font-size:.8rem}.writer-images li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-images button{border:0;background:transparent;color:var(--muted);cursor:pointer}.writer-status{min-height:1.75rem;margin:1rem 0 0;text-align:center}.writer-dialog{width:min(52rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--bg);color:var(--text)}.writer-dialog::backdrop{background:rgba(10,12,18,.55);backdrop-filter:blur(4px)}.writer-dialog>form{display:flex;justify-content:flex-end}.writer-dialog>form button{border:0;background:transparent;color:var(--text);font-size:2rem;cursor:pointer}.writer-dialog .article{box-shadow:none}@media(max-width:900px){.writer__header{align-items:flex-start;flex-direction:column}.writer__actions{justify-content:flex-start}.writer__grid{grid-template-columns:1fr}.writer-card--editor{min-height:45rem}.writer__sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.writer{margin-inline:calc(50% - 50vw);padding-inline:.75rem}.writer__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.writer__title-row,.writer__sidebar{grid-template-columns:1fr}.writer-card--editor{min-height:38rem}.writer-images li{grid-template-columns:1fr auto}.writer-images input{grid-column:1/-1;grid-row:2}}
+</style>
+</body>
+</html>

@@ -11,7 +11,7 @@ export default defineConfig({
   base,
   output: 'static',
   trailingSlash: 'always',
-  integrations: [sitemap({ filter: (page) => !page.includes('/draft-preview/') })],
+  integrations: [sitemap({ filter: (page) => !page.includes('/draft-preview/') && !page.endsWith('/write/') })],
   markdown: {
     rehypePlugins: [
       () => (tree) => {
