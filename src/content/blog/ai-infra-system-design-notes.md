@@ -4,7 +4,7 @@ description: "梳理 AI Infra 的硬件约束、软件栈，以及大模型训�
 slug: "ai-infra-system-design-notes"
 published: 2026-08-15
 category: "AI Infra"
-tags:[AI Infra, PyTorch, GPU, LLM, 系统设计]
+tags: [AI Infra, PyTorch, GPU, LLM, 系统设计]
 draft: false
 featured: false
 toc: true
