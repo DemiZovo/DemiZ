@@ -2,7 +2,7 @@
 
 写作台使用 Cloudflare Workers 免费版托管，并通过 GitHub OAuth 将访问者限制为一个固定的 GitHub 用户 ID。未登录用户不会收到写作台 HTML；发布时，Markdown 与图片会作为同一个 Git commit 写入仓库。
 
-草稿箱使用浏览器 IndexedDB 保存文章字段和图片，不写入 GitHub。AI 写作助手通过 Workers AI binding 调用 Cloudflare 托管模型，可生成大纲、正文或润色结果；只有点击“替换正文”或“追加到正文”后，结果才会进入编辑器。
+草稿箱使用浏览器 IndexedDB 保存文章字段和图片，不写入 GitHub。“保存草稿”更新当前记录，“另存为新草稿”保留原记录并创建副本，“新建文章”清空编辑器但不会删除草稿箱内容。AI 写作助手通过 Workers AI binding 调用 Cloudflare 托管模型，可生成大纲、正文或润色结果；只有点击“替换正文”或“追加到正文”后，结果才会进入编辑器。
 
 ## 1. 生成私有写作台资源
 
