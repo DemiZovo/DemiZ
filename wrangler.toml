@@ -1,5 +1,5 @@
 name = "demiz-writer"
-main = "src/index.js"
+main = "writer-worker/src/index.js"
 compatibility_date = "2026-08-14"
 
 [vars]
@@ -12,6 +12,6 @@ ALLOWED_GITHUB_USER_ID = "304166225"
 required = ["GITHUB_CLIENT_SECRET", "GITHUB_TOKEN", "SESSION_SECRET"]
 
 [assets]
-directory = "./public"
+directory = "./writer-worker/public"
 binding = "ASSETS"
 run_worker_first = true

@@ -14,13 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+      - name: Use locked pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.11.1
+          run_install: false
       - name: Use locked Node.js LTS
         uses: actions/setup-node@v6
         with:
           node-version: 22.18.0
-          cache: npm
+          cache: pnpm
       - name: Install locked dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
       - name: Resolve GitHub Pages URL
         shell: bash
         env:
@@ -54,13 +59,13 @@ jobs:
             echo "PUBLIC_WRITER_URL=$WRITER_URL" >> "$GITHUB_ENV"
           fi
       - name: Type and content checks
-        run: npm run check:content
+        run: pnpm run check:content
       - name: Production build
-        run: npm run build
+        run: pnpm run build
       - name: Isolate private writer from Pages artifact
-        run: npm run prepare:writer
+        run: pnpm run prepare:writer
       - name: Verify generated URLs
-        run: npm run verify:build
+        run: pnpm run verify:build
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
         uses: actions/configure-pages@v5

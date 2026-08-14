@@ -5,7 +5,7 @@
 ## 1. 生成私有写作台资源
 
 ```bash
-npm run build:writer
+pnpm run build:writer
 ```
 
 该命令会把 `/write` 的页面与专属资源复制到 `writer-worker/public/`，并从公开的 `dist/` 中移除 `/write`。
@@ -21,7 +21,7 @@ npm run build:writer
 
 ## 3. 配置 Worker
 
-部署配置 `writer-worker/wrangler.toml` 已提交，且不包含秘密。请在 Cloudflare 的 **Settings → Variables & Secrets** 配置普通变量：
+部署配置 `wrangler.toml` 位于仓库根目录，供 Cloudflare 自动构建和本地 Wrangler 共用，且不包含秘密。请在 Cloudflare 的 **Settings → Variables & Secrets** 配置普通变量：
 
 - `GITHUB_REPOSITORY`：例如 `OWNER/REPOSITORY`
 - `GITHUB_BRANCH`：公开站点的默认分支
@@ -43,8 +43,8 @@ npx wrangler secret put SESSION_SECRET
 在项目根目录执行：
 
 ```bash
-npm run build:writer
-npx wrangler deploy --config writer-worker/wrangler.toml
+pnpm run build:writer
+npx wrangler deploy
 ```
 
 部署后，在 GitHub 仓库的 Actions variables 中新增：

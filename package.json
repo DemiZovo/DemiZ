@@ -7,8 +7,8 @@
     "sync": "astro sync",
     "check": "astro check",
     "check:content": "astro sync && astro check",
-    "build": "astro build",
-    "build:writer": "astro build && node scripts/prepare-writer.mjs",
+    "build": "astro build && node scripts/prepare-writer.mjs",
+    "build:writer": "pnpm run build",
     "prepare:writer": "node scripts/prepare-writer.mjs",
     "check:writer": "node scripts/check-writer-worker.mjs",
     "verify:build": "node scripts/verify-build.mjs"
@@ -24,5 +24,5 @@
     "typescript": "5.9.3"
   },
   "engines": { "node": ">=22.18.0 <25" },
-  "packageManager": "npm@10.9.3"
+  "packageManager": "pnpm@10.11.1"
 }
