@@ -32,10 +32,12 @@ import '../styles/global.css';
           导入 MD
           <input type="file" accept=".md,.mdx,text/markdown" data-import hidden />
         </label>
+        <button class="writer-button writer-button--ghost" type="button" data-new-article>新建文章</button>
         <button class="writer-button writer-button--ghost" type="button" data-preview>预览</button>
         <button class="writer-button writer-button--ghost" type="button" data-download>下载 MD</button>
         <button class="writer-button writer-button--ghost" type="button" data-skill>导入 DemiZ 写作 Skill</button>
         <button class="writer-button writer-button--ghost" type="button" data-save-draft>保存草稿</button>
+        <button class="writer-button writer-button--ghost" type="button" data-save-draft-copy>另存为新草稿</button>
         <button class="writer-button writer-button--ghost" type="button" data-drafts>草稿箱 <span class="writer-draft-count" data-draft-count>0</span></button>
         <a class="writer-button writer-button--ghost" href="/logout">退出</a>
         <button class="writer-button writer-button--publish" type="button" data-publish>发布</button>
@@ -216,9 +218,9 @@ import '../styles/global.css';
     indicator.classList.toggle('is-active', skillEnabled);
   }
 
-  function readDraft(): DraftRecord {
+  function readDraft(id = currentDraftId || crypto.randomUUID()): DraftRecord {
     return {
-      id: currentDraftId || crypto.randomUUID(),
+      id,
       savedAt: new Date().toISOString(),
       collection: collection(),
       title: field('title').value,
@@ -261,6 +263,44 @@ import '../styles/global.css';
     images = draft.images || [];
     form.dispatchEvent(new Event('change', { bubbles: true }));
     renderImages();
+  }
+
+  function hasEditorContent() {
+    return images.length > 0 || ['title', 'slug', 'body', 'description', 'tags', 'updated', 'aiPrompt'].some((name) => field(name).value.trim());
+  }
+
+  function startNewArticle() {
+    if (hasEditorContent() && !confirm('新建文章会清空当前编辑器；已保存的草稿不会被删除。确定继续吗？')) return;
+    form.reset();
+    currentDraftId = null;
+    images = [];
+    renderImages();
+    field('published').value = today;
+    const slug = field('slug') as HTMLInputElement;
+    delete slug.dataset.edited;
+    const output = $('[data-ai-output]') as HTMLTextAreaElement;
+    output.value = '';
+    ($('[data-ai-result]') as HTMLElement).hidden = true;
+    ($('[data-ai-status]') as HTMLElement).textContent = '使用 Cloudflare Workers AI，每日免费额度内不收费。';
+    form.dispatchEvent(new Event('change', { bubbles: true }));
+    field('title').focus();
+    form.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    status.textContent = '已新建文章；草稿箱中的原草稿保持不变。';
+  }
+
+  async function saveBrowserDraft(button: HTMLButtonElement, asCopy = false) {
+    button.disabled = true;
+    try {
+      const draft = readDraft(asCopy ? crypto.randomUUID() : undefined);
+      await putDraft(draft);
+      currentDraftId = draft.id;
+      await updateDraftCount();
+      status.textContent = `${asCopy ? '已另存为新草稿' : '草稿已保存到当前浏览器'}：${draft.title.trim() || '未命名草稿'}`;
+    } catch {
+      status.textContent = '草稿保存失败，请检查浏览器存储空间或隐私设置。';
+    } finally {
+      button.disabled = false;
+    }
   }
 
   async function updateDraftCount() {
@@ -432,21 +472,9 @@ import '../styles/global.css';
     status.textContent = 'AI 结果已追加到正文，请继续检查和编辑。';
   });
 
-  $('[data-save-draft]')?.addEventListener('click', async () => {
-    const button = $('[data-save-draft]') as HTMLButtonElement;
-    button.disabled = true;
-    try {
-      const draft = readDraft();
-      await putDraft(draft);
-      currentDraftId = draft.id;
-      await updateDraftCount();
-      status.textContent = `草稿已保存到当前浏览器：${draft.title.trim() || '未命名草稿'}`;
-    } catch {
-      status.textContent = '草稿保存失败，请检查浏览器存储空间或隐私设置。';
-    } finally {
-      button.disabled = false;
-    }
-  });
+  $('[data-new-article]')?.addEventListener('click', startNewArticle);
+  $('[data-save-draft]')?.addEventListener('click', () => saveBrowserDraft($('[data-save-draft]') as HTMLButtonElement));
+  $('[data-save-draft-copy]')?.addEventListener('click', () => saveBrowserDraft($('[data-save-draft-copy]') as HTMLButtonElement, true));
 
   $('[data-drafts]')?.addEventListener('click', async () => {
     try {
