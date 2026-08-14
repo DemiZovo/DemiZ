@@ -1,0 +1,54 @@
+---
+interface Props { email: string; }
+const { email } = Astro.props;
+---
+<span class="copy-email" data-copy-email data-email={email}>
+  <button type="button" class="copy-email__button" data-copy-email-button aria-describedby="copy-email-status">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
+    <span data-copy-email-label>{email}</span>
+  </button>
+  <span class="copy-email__status" id="copy-email-status" role="status" aria-live="polite" data-copy-email-status>点击复制邮箱</span>
+</span>
+
+<script>
+  for (const control of document.querySelectorAll<HTMLElement>('[data-copy-email]')) {
+    const button = control.querySelector<HTMLButtonElement>('[data-copy-email-button]');
+    const label = control.querySelector<HTMLElement>('[data-copy-email-label]');
+    const status = control.querySelector<HTMLElement>('[data-copy-email-status]');
+    const email = control.dataset.email;
+    let timer: number | undefined;
+    if (!button || !label || !status || !email) continue;
+
+    const fallbackCopy = () => {
+      const input = document.createElement('textarea');
+      input.value = email;
+      input.setAttribute('readonly', '');
+      input.style.position = 'fixed';
+      input.style.opacity = '0';
+      document.body.append(input);
+      input.select();
+      const copied = document.execCommand('copy');
+      input.remove();
+      if (!copied) throw new Error('Copy command failed');
+    };
+
+    button.addEventListener('click', async () => {
+      window.clearTimeout(timer);
+      try {
+        if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(email);
+        else fallbackCopy();
+        control.classList.add('is-copied');
+        label.textContent = '已复制邮箱';
+        status.textContent = `${email} 已复制到剪贴板`;
+      } catch {
+        label.textContent = email;
+        status.textContent = '复制失败，请手动选择邮箱地址';
+      }
+      timer = window.setTimeout(() => {
+        control.classList.remove('is-copied');
+        label.textContent = email;
+        status.textContent = '点击复制邮箱';
+      }, 2200);
+    });
+  }
+</script>
