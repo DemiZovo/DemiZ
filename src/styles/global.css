@@ -4,6 +4,9 @@
 .hero-profile{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:clamp(1rem,4vw,2.5rem)}
 .avatar-placeholder{width:7rem;aspect-ratio:1;border:1px solid var(--border);border-radius:50%;background:#fff;box-shadow:inset 0 0 0 .35rem color-mix(in srgb,var(--accent) 5%,transparent)}
 .avatar-large{width:9rem;margin:1rem 0 1.5rem}
+.hero-links{display:flex;align-items:center;flex-wrap:wrap;gap:.65rem}
+.hero-links>p{margin:0}
+.hero-links .home-like{margin-top:0}
 .home-like{position:relative;width:max-content;margin-top:.9rem}
 .home-like-button{display:grid;place-items:center;width:3.25rem;height:3.25rem;padding:0;border:1px solid color-mix(in srgb,var(--accent) 52%,var(--border));border-radius:50%;background:color-mix(in srgb,var(--accent) 10%,var(--surface));color:var(--accent);box-shadow:0 .45rem 1.2rem color-mix(in srgb,var(--accent) 18%,transparent),inset 0 1px rgba(255,255,255,.55);backdrop-filter:blur(12px);cursor:pointer;transition:transform .18s ease,background-color .18s ease,border-color .18s ease,box-shadow .18s ease}
 .home-like-button svg{width:1.35rem;height:1.35rem;fill:currentColor;filter:drop-shadow(0 .12rem .2rem color-mix(in srgb,var(--accent) 24%,transparent))}
