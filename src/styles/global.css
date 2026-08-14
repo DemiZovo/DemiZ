@@ -153,3 +153,11 @@ button,input,textarea,select{font:inherit}
   .more-menu summary span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .tool-divider{display:none}
 }
+
+.contact-links{display:flex;flex-wrap:wrap;align-items:center;gap:.75rem}
+.copy-email{position:relative;display:inline-flex}
+.copy-email__button{display:inline-flex;align-items:center;gap:.4rem;min-height:2.5rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:.65rem;background:color-mix(in srgb,var(--accent) 6%,var(--surface));color:var(--accent);font:inherit;cursor:pointer}
+.copy-email__button:hover,.copy-email.is-copied .copy-email__button{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,var(--surface))}
+.copy-email__button svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.copy-email__status{position:absolute;left:50%;bottom:calc(100% + .5rem);z-index:2;width:max-content;max-width:min(18rem,calc(100vw - 2rem));padding:.35rem .6rem;border:1px solid var(--border);border-radius:.55rem;background:var(--surface);box-shadow:var(--shadow);color:var(--muted);font-size:.78rem;line-height:1.4;opacity:0;pointer-events:none;transform:translate(-50%,.2rem);transition:opacity .16s ease,transform .16s ease;backdrop-filter:blur(12px)}
+.copy-email:hover .copy-email__status,.copy-email:focus-within .copy-email__status,.copy-email.is-copied .copy-email__status{opacity:1;transform:translate(-50%,0)}
