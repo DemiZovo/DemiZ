@@ -1,0 +1,4 @@
+interface:
+  display_name: "DemiZ 博客写作"
+  short_description: "为 DemiZ 个人网站撰写克制清晰的中文技术博客"
+  default_prompt: "使用 $demiz-blog-writer 将这个主题整理成可直接发布的 Astro Markdown 技术博客。"

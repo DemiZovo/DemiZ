@@ -30,7 +30,7 @@ const secondaryActive = secondaryLinks.some(({ href }) => current(href));
   <symbol id="nav-archive" viewBox="0 0 24 24"><path d="M4 7h16v13H4zM3 3h18v4H3zM9 11h6" /></symbol>
   <symbol id="nav-tag" viewBox="0 0 24 24"><path d="M20 13 13 20 4 11V4h7z" /><circle cx="8.5" cy="8.5" r="1" /></symbol>
   <symbol id="nav-message" viewBox="0 0 24 24"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /></symbol>
-  <symbol id="nav-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></symbol>
+  <symbol id="nav-more" viewBox="0 0 24 24"><path d="M4 5h16"/><path d="M4 12h16"/><path d="M4 19h16"/></symbol>
   <symbol id="nav-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></symbol>
   <symbol id="nav-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z" /></symbol>
   <symbol id="nav-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></symbol>
@@ -43,7 +43,7 @@ const secondaryActive = secondaryLinks.some(({ href }) => current(href));
   </nav>
   <div class="header-tools">
     <details class="more-menu" data-more-menu>
-      <summary class="tool-button" aria-label="更多导航" aria-current={secondaryActive ? 'page' : undefined}><svg aria-hidden="true"><use href="#nav-more"></use></svg><span>更多</span></summary>
+      <summary class="tool-button" aria-label="更多导航" aria-current={secondaryActive ? 'page' : undefined}><svg aria-hidden="true"><use href="#nav-more"></use></svg><span></span></summary>
       <ul class="more-menu-list">
         {secondaryLinks.map(({ href, label, icon }) => <li><a href={sitePath(href)} aria-current={current(href) ? 'page' : undefined}><svg aria-hidden="true"><use href={`#nav-${icon}`}></use></svg><span>{label}</span></a></li>)}
       </ul>
