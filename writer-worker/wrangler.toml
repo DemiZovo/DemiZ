@@ -1,6 +1,11 @@
 name = "demiz-writer"
 main = "src/index.js"
-compatibility_date = "2026-08-15"
+compatibility_date = "2026-08-14"
+
+[vars]
+GITHUB_REPOSITORY = "DemiZovo/DemiZ"
+GITHUB_BRANCH = "main"
+ALLOWED_GITHUB_USER_ID = "304166225"
 
 [assets]
 directory = "./public"
