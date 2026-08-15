@@ -1,5 +1,5 @@
 /* Sakura-inspired editorial layer: abstract motifs only, no official artwork. */
-:root{
+html:root{
   --bg:#fffaf5;
   --surface:#fffefb;
   --surface-soft:#fff6f7;
@@ -59,7 +59,7 @@
 }
 .effects-toggle:hover{border-color:var(--accent);background:var(--surface-soft)}
 
-:root[data-theme="dark"]{
+html:root[data-theme="dark"]{
   --bg:#211a1d;
   --surface:#2b2226;
   --surface-soft:#32262b;
@@ -73,9 +73,9 @@
   --border:#4d393f;
   --border-strong:#72505a;
   --code:#171215;
-  --shadow-neumo:.75rem .75rem 1.65rem rgba(0,0,0,.32),-.65rem -.65rem 1.35rem rgba(76,53,63,.52);
-  --shadow-neumo-soft:.35rem .35rem .85rem rgba(0,0,0,.28),-.3rem -.3rem .72rem rgba(76,53,63,.42);
-  --shadow-neumo-inset:inset .25rem .25rem .55rem rgba(0,0,0,.3),inset -.22rem -.22rem .5rem rgba(76,53,63,.4);
+  --shadow-neumo:.75rem .75rem 1.65rem rgba(0,0,0,.32),-.65rem -.65rem 1.35rem rgba(77,57,63,.52);
+  --shadow-neumo-soft:.35rem .35rem .85rem rgba(0,0,0,.28),-.3rem -.3rem .72rem rgba(77,57,63,.42);
+  --shadow-neumo-inset:inset .25rem .25rem .55rem rgba(0,0,0,.3),inset -.22rem -.22rem .5rem rgba(77,57,63,.4);
   --shadow:var(--shadow-neumo-soft);
 }
 
