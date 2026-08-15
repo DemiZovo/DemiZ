@@ -1,16 +1,4 @@
 const encoder = new TextEncoder();
-const AI_MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8';
-const DEMIZ_BLOG_SKILL = `
-你正在使用 DemiZ 博客写作 Skill。请严格遵守：
-- 使用自然、清晰、克制的简体中文，像程序员整理自己的学习和实践记录。
-- 先说明为什么，再说明怎么做；区分事实、经验与建议。
-- 不虚构版本号、运行结果、性能数据或个人经历；信息不足时明确保留待确认项。
-- 使用短段落，每节只处理一个核心问题；主要章节使用二级标题。
-- 代码块注明语言；命令、路径、字段和代码标识符使用反引号。
-- 根据主题灵活包含背景、目标与约束、方案选择、实现、踩坑与验证、限制和总结，不制造空章节。
-- 禁止夸张标题、营销话术、网络热词、表情符号和模板化结尾。
-- 本站不使用文章封面，不生成 cover 字段或封面建议。
-`;
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 function redirect(location, cookieValues = []) {
   const headers = new Headers({ location, 'cache-control': 'no-store' });
@@ -108,51 +96,6 @@ async function finishLogin(request, env) {
   return redirect('/', [cookie('demiz_writer_session', session, 43200), cookie('demiz_writer_state', '', 0), cookie('demiz_writer_verifier', '', 0)]);
 }
 
-async function assist(request, env) {
-  const origin = new URL(request.url).origin;
-  if (request.headers.get('origin') !== origin) return json({ message: '请求来源无效' }, 403);
-  if (!env.AI) return json({ message: 'AI 写作助手尚未配置' }, 503);
-  try {
-    const payload = await request.json();
-    const action = String(payload.action || '');
-    const prompt = String(payload.prompt || '').trim();
-    const context = payload.context && typeof payload.context === 'object' ? payload.context : {};
-    if (!['outline', 'draft', 'polish'].includes(action)) return json({ message: 'AI 写作操作无效' }, 400);
-    if (prompt.length > 6_000 || String(context.body || '').length > 50_000) return json({ message: '提交给 AI 的内容过长' }, 413);
-    if (action === 'polish' && !String(context.body || '').trim()) return json({ message: '没有可润色的正文' }, 400);
-
-    const tasks = {
-      outline: '根据写作要求和文章信息生成一份可直接继续编辑的 Markdown 大纲。每个章节附一条简短写作提示，不要写 frontmatter。',
-      draft: '根据写作要求和文章信息生成完整的 Markdown 正文。不要输出 frontmatter，不要把全文包在代码围栏中。',
-      polish: '在不改变事实和技术含义的前提下润色现有正文，改善结构、表达和 Markdown 格式。只输出润色后的正文，不要输出说明或 frontmatter。',
-    };
-    const safeContext = {
-      collection: context.collection === 'life' ? 'life' : 'blog',
-      title: String(context.title || '').slice(0, 100),
-      description: String(context.description || '').slice(0, 240),
-      category: String(context.category || '').slice(0, 80),
-      tags: String(context.tags || '').slice(0, 300),
-      body: String(context.body || '').slice(0, 50_000),
-    };
-    const system = `你是 DemiZ 私人写作台中的中文写作助手。只处理用户提供的材料，不得编造未经材料支持的事实、测试结果、版本号或个人经历。输出应可直接放入 Markdown 正文编辑器。${payload.useSkill && safeContext.collection === 'blog' ? DEMIZ_BLOG_SKILL : ''}`;
-    const user = `${tasks[action]}\n\n写作要求：\n${prompt || '未额外提供'}\n\n文章信息：\n${JSON.stringify(safeContext, null, 2)}`;
-    const result = await env.AI.run(AI_MODEL, {
-      messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
-      max_tokens: action === 'outline' ? 1_200 : 3_000,
-      temperature: action === 'polish' ? 0.35 : 0.55,
-      repetition_penalty: 1.08,
-    });
-    const text = typeof result === 'string' ? result : result?.response;
-    if (!text || typeof text !== 'string') throw new Error('Workers AI returned no text');
-    return json({ text, model: AI_MODEL });
-  } catch (error) {
-    console.error(error);
-    const detail = error instanceof Error ? error.message : String(error);
-    if (/3036|account limited|daily free allocation|429/i.test(detail)) return json({ message: '今日免费 AI 额度已用完，请明天再试' }, 429);
-    return json({ message: 'AI 写作暂时不可用，请稍后重试' }, 503);
-  }
-}
-
 async function publish(request, env) {
   const origin = new URL(request.url).origin;
   if (request.headers.get('origin') !== origin) return json({ message: '请求来源无效' }, 403);
@@ -193,7 +136,6 @@ export default {
     if (url.pathname === '/logout') return redirect('/login', [cookie('demiz_writer_session', '', 0)]);
     const userId = await sessionUser(request, env);
     if (!userId) return url.pathname.startsWith('/api/') ? json({ message: '请先登录' }, 401) : redirect('/login');
-    if (url.pathname === '/api/assist' && request.method === 'POST') return assist(request, env);
     if (url.pathname === '/api/publish' && request.method === 'POST') return publish(request, env);
     if (url.pathname.startsWith('/api/')) return json({ message: 'Not found' }, 404);
     const response = await env.ASSETS.fetch(request);

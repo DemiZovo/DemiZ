@@ -11,9 +11,6 @@ ALLOWED_GITHUB_USER_ID = "304166225"
 [secrets]
 required = ["GITHUB_CLIENT_SECRET", "GITHUB_TOKEN", "SESSION_SECRET"]
 
-[ai]
-binding = "AI"
-
 [assets]
 directory = "./writer-worker/public"
 binding = "ASSETS"

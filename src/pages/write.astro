@@ -30,13 +30,12 @@ import '../styles/sakura-theme.css';
       </div>
       <div class="writer__actions">
         <label class="writer-button writer-button--ghost">
-          导入 MD
-          <input type="file" accept=".md,.mdx,text/markdown" data-import hidden />
+          导入 MD 与图片
+          <input type="file" accept=".md,.mdx,text/markdown,image/png,image/jpeg,image/webp,image/avif,image/gif,image/svg+xml" multiple data-import hidden />
         </label>
         <button class="writer-button writer-button--ghost" type="button" data-new-article>新建文章</button>
         <button class="writer-button writer-button--ghost" type="button" data-preview>预览</button>
         <button class="writer-button writer-button--ghost" type="button" data-download>下载 MD</button>
-        <button class="writer-button writer-button--ghost" type="button" data-skill>导入 DemiZ 写作 Skill</button>
         <button class="writer-button writer-button--ghost" type="button" data-save-draft>保存草稿</button>
         <button class="writer-button writer-button--ghost" type="button" data-save-draft-copy>另存为新草稿</button>
         <button class="writer-button writer-button--ghost" type="button" data-drafts>草稿箱 <span class="writer-draft-count" data-draft-count>0</span></button>
@@ -68,42 +67,9 @@ import '../styles/sakura-theme.css';
           <label data-blog-field><span>分类</span><input name="category" value="未分类" /></label>
           <label><span>发布日期</span><input name="published" type="date" required /></label>
           <label><span>更新日期（可选）</span><input name="updated" type="date" /></label>
-          <label class="writer-check"><input name="draft" type="checkbox" checked /> 保存为草稿</label>
           <label class="writer-check"><input name="featured" type="checkbox" /> 设为精选</label>
           <label class="writer-check" data-blog-field><input name="toc" type="checkbox" checked /> 显示目录</label>
         </fieldset>
-
-        <fieldset class="writer-card writer-ai">
-          <legend>AI 写作助手</legend>
-          <div class="writer-ai__skill" data-ai-skill-state>DemiZ Skill 未导入</div>
-          <label><span>写作要求或零散材料</span><textarea name="aiPrompt" rows="5" maxlength="6000" placeholder="例如：根据这些学习笔记整理一篇文章，重点解释踩坑和验证过程……"></textarea></label>
-          <div class="writer-ai__actions">
-            <button type="button" data-ai-action="outline">生成大纲</button>
-            <button type="button" data-ai-action="draft">生成正文</button>
-            <button type="button" data-ai-action="polish">润色正文</button>
-          </div>
-          <p class="writer-ai__status" role="status" aria-live="polite" data-ai-status>使用 Cloudflare Workers AI，每日免费额度内不收费。</p>
-          <div class="writer-ai__result" data-ai-result hidden>
-            <label><span>AI 结果</span><textarea rows="12" readonly data-ai-output></textarea></label>
-            <div class="writer-ai__actions">
-              <button type="button" data-ai-replace>替换正文</button>
-              <button type="button" data-ai-append>追加到正文</button>
-            </div>
-          </div>
-        </fieldset>
-
-        <details class="writer-card writer-skill" data-blog-field data-skill-guide>
-          <summary>DemiZ 写作规范</summary>
-          <ol>
-            <li>先说明为什么，再说明怎么做。</li>
-            <li>使用自然、清晰、克制的简体中文。</li>
-            <li>短段落，每节只处理一个核心问题。</li>
-            <li>事实、经验和建议需要明确区分。</li>
-            <li>代码块注明语言，命令和路径使用行内代码。</li>
-            <li>记录验证方式、限制和容易踩坑的地方。</li>
-          </ol>
-          <p>默认：草稿、非精选；存在多个有效章节时开启目录。</p>
-        </details>
 
         <fieldset class="writer-card">
           <legend><span data-image-title>正文图片</span></legend>
@@ -152,9 +118,6 @@ import '../styles/sakura-theme.css';
     category: string;
     published: string;
     updated: string;
-    aiPrompt: string;
-    skillEnabled: boolean;
-    draft: boolean;
     featured: boolean;
     toc: boolean;
     images: ImageEntry[];
@@ -168,8 +131,6 @@ import '../styles/sakura-theme.css';
   const imageInput = $('[data-images]') as HTMLInputElement;
   let images: ImageEntry[] = [];
   let currentDraftId: string | null = null;
-  let skillEnabled = false;
-  try { skillEnabled = localStorage.getItem('demiz-writer-skill-enabled') === 'true'; } catch {}
   const today = new Date().toISOString().slice(0, 10);
   (form.elements.namedItem('published') as HTMLInputElement).value = today;
   const draftDatabase = new Promise<IDBDatabase>((resolve, reject) => {
@@ -183,6 +144,39 @@ import '../styles/sakura-theme.css';
 
   const escapeHtml = (value: string) => value.replace(/[&<>"']/g, (char) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[char]!));
   const yamlString = (value: string) => JSON.stringify(value.trim());
+  const yamlValue = (value: string): string | boolean | string[] => {
+    const trimmed = value.trim();
+    if (trimmed === 'true' || trimmed === 'false') return trimmed === 'true';
+    if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      return trimmed.slice(1, -1).split(',').map((item) => String(yamlValue(item))).filter(Boolean);
+    }
+    if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+      if (trimmed.startsWith('"')) {
+        try { return JSON.parse(trimmed); } catch {}
+      }
+      return trimmed.slice(1, -1).replace(/''/g, "'");
+    }
+    return trimmed.replace(/\s+#.*$/, '').trim();
+  };
+  function parseFrontmatter(source: string) {
+    const result: Record<string, string | boolean | string[]> = {};
+    let listKey = '';
+    for (const rawLine of source.split(/\r?\n/)) {
+      const listItem = rawLine.match(/^\s+-\s+(.+)$/);
+      if (listItem && listKey) {
+        const list = result[listKey];
+        if (Array.isArray(list)) list.push(String(yamlValue(listItem[1] || '')));
+        continue;
+      }
+      const entry = rawLine.match(/^([A-Za-z][\w-]*):(?:\s*(.*))?$/);
+      if (!entry) { listKey = ''; continue; }
+      const key = entry[1] || '';
+      const value = entry[2] || '';
+      if (!value.trim()) { result[key] = []; listKey = key; }
+      else { result[key] = yamlValue(value); listKey = ''; }
+    }
+    return result;
+  }
   const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9\s-]/g, '').replace(/[\s_]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
   const collection = () => (new FormData(form).get('collection') as Collection) || 'blog';
   const assetRoot = () => `/images/${collection()}/${(form.elements.namedItem('slug') as HTMLInputElement).value.trim()}`;
@@ -191,6 +185,32 @@ import '../styles/sakura-theme.css';
     const stem = slugify(name.replace(/\.[^.]+$/, '')) || `image-${index + 1}`;
     return `${stem}.${extension}`;
   };
+  const fileBasename = (path: string) => {
+    const cleanPath = path.split(/[?#]/, 1)[0] || '';
+    const basename = cleanPath.replace(/\\/g, '/').split('/').pop() || '';
+    try { return decodeURIComponent(basename).toLowerCase(); } catch { return basename.toLowerCase(); }
+  };
+
+  function importReferencedImages(body: string, selectedFiles: File[]) {
+    const candidates = selectedFiles.filter((file) => file.type.startsWith('image/') || /\.(?:avif|gif|jpe?g|png|svg|webp)$/i.test(file.name));
+    const byName = new Map(candidates.map((file) => [file.name.toLowerCase(), file]));
+    let imported = 0;
+    let missing = 0;
+    const rewritten = body.replace(/(!\[[^\]]*\]\(\s*)(?:<([^>]+)>|([^\s)]+))((?:\s+["'][^"']*["'])?\s*\))/g, (source, prefix, anglePath, plainPath, suffix) => {
+      const imagePath = String(anglePath || plainPath || '');
+      if (/^(?:(?!file:)[a-z][a-z\d+.-]*:|\/|#)/i.test(imagePath)) return source;
+      const file = byName.get(fileBasename(imagePath));
+      if (!file) { missing += 1; return source; }
+      let index = images.findIndex((entry) => entry.file === file);
+      if (index < 0) {
+        images.push({ file, alt: '', caption: '' });
+        index = images.length - 1;
+        imported += 1;
+      }
+      return `${prefix}${assetRoot()}/${safeName(file.name, index)}${suffix}`;
+    });
+    return { body: rewritten, imported, missing };
+  }
 
   async function draftRequest<T>(mode: IDBTransactionMode, operation: (store: IDBObjectStore) => IDBRequest<T>) {
     const database = await draftDatabase;
@@ -211,14 +231,6 @@ import '../styles/sakura-theme.css';
   const removeDraft = (id: string) => draftRequest<undefined>('readwrite', (store) => store.delete(id));
   const field = (name: string) => form.elements.namedItem(name) as HTMLInputElement | HTMLTextAreaElement;
 
-  function updateSkillState() {
-    const button = $('[data-skill]') as HTMLButtonElement;
-    const indicator = $('[data-ai-skill-state]') as HTMLElement;
-    button.textContent = skillEnabled ? 'DemiZ Skill 已导入' : '导入 DemiZ 写作 Skill';
-    indicator.textContent = skillEnabled ? 'DemiZ Skill 已启用' : 'DemiZ Skill 未导入';
-    indicator.classList.toggle('is-active', skillEnabled);
-  }
-
   function readDraft(id = currentDraftId || crypto.randomUUID()): DraftRecord {
     return {
       id,
@@ -232,9 +244,6 @@ import '../styles/sakura-theme.css';
       category: field('category').value,
       published: field('published').value,
       updated: field('updated').value,
-      aiPrompt: field('aiPrompt').value,
-      skillEnabled,
-      draft: (field('draft') as HTMLInputElement).checked,
       featured: (field('featured') as HTMLInputElement).checked,
       toc: (field('toc') as HTMLInputElement).checked,
       images: images.map((image) => ({ ...image })),
@@ -252,11 +261,6 @@ import '../styles/sakura-theme.css';
     field('category').value = draft.category;
     field('published').value = draft.published || today;
     field('updated').value = draft.updated;
-    field('aiPrompt').value = draft.aiPrompt || '';
-    skillEnabled = Boolean(draft.skillEnabled);
-    try { localStorage.setItem('demiz-writer-skill-enabled', String(skillEnabled)); } catch {}
-    updateSkillState();
-    (field('draft') as HTMLInputElement).checked = draft.draft;
     (field('featured') as HTMLInputElement).checked = draft.featured;
     (field('toc') as HTMLInputElement).checked = draft.toc;
     const slug = field('slug') as HTMLInputElement;
@@ -267,7 +271,7 @@ import '../styles/sakura-theme.css';
   }
 
   function hasEditorContent() {
-    return images.length > 0 || ['title', 'slug', 'body', 'description', 'tags', 'updated', 'aiPrompt'].some((name) => field(name).value.trim());
+    return images.length > 0 || ['title', 'slug', 'body', 'description', 'tags', 'updated'].some((name) => field(name).value.trim());
   }
 
   function startNewArticle() {
@@ -279,10 +283,6 @@ import '../styles/sakura-theme.css';
     field('published').value = today;
     const slug = field('slug') as HTMLInputElement;
     delete slug.dataset.edited;
-    const output = $('[data-ai-output]') as HTMLTextAreaElement;
-    output.value = '';
-    ($('[data-ai-result]') as HTMLElement).hidden = true;
-    ($('[data-ai-status]') as HTMLElement).textContent = '使用 Cloudflare Workers AI，每日免费额度内不收费。';
     form.dispatchEvent(new Event('change', { bubbles: true }));
     field('title').focus();
     form.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
@@ -358,8 +358,7 @@ import '../styles/sakura-theme.css';
     const lines = ['---', `title: ${yamlString(String(data.get('title') || ''))}`, `description: ${yamlString(String(data.get('description') || ''))}`, `slug: ${yamlString(slug)}`, `published: ${data.get('published')}`];
     if (data.get('updated')) lines.push(`updated: ${data.get('updated')}`);
     if (kind === 'blog') lines.push(`category: ${yamlString(String(data.get('category') || '未分类'))}`);
-    if (tags.length) lines.push('tags:', ...tags.map((tag) => `  - ${yamlString(tag)}`));
-    else lines.push('tags: []');
+    lines.push(`tags: [${tags.map(yamlString).join(', ')}]`);
     if (kind === 'life') {
       if (!images.length) lines.push('gallery: []');
       else lines.push('gallery:');
@@ -369,7 +368,7 @@ import '../styles/sakura-theme.css';
         if (image.caption) lines.push(`    caption: ${yamlString(image.caption)}`);
       });
     }
-    lines.push(`draft: ${data.has('draft')}`, `featured: ${data.has('featured')}`);
+    lines.push('draft: false', `featured: ${data.has('featured')}`);
     if (kind === 'blog') lines.push(`toc: ${data.has('toc')}`);
     return `${lines.join('\n')}\n---\n\n${String(data.get('body') || '').trim()}\n`;
   }
@@ -398,81 +397,6 @@ import '../styles/sakura-theme.css';
   (form.elements.namedItem('slug') as HTMLInputElement).addEventListener('input', (event) => (event.target as HTMLInputElement).dataset.edited = 'true');
   imageInput.addEventListener('change', () => { images.push(...Array.from(imageInput.files || []).map((file) => ({ file, alt: '', caption: '' }))); renderImages(); imageInput.value = ''; });
 
-  $('[data-skill]')?.addEventListener('click', () => {
-    if (collection() !== 'blog') {
-      (form.elements.namedItem('collection') as RadioNodeList).value = 'blog';
-      form.dispatchEvent(new Event('change', { bubbles: true }));
-    }
-    (form.elements.namedItem('draft') as HTMLInputElement).checked = true;
-    (form.elements.namedItem('featured') as HTMLInputElement).checked = false;
-    (form.elements.namedItem('toc') as HTMLInputElement).checked = true;
-    skillEnabled = true;
-    try { localStorage.setItem('demiz-writer-skill-enabled', 'true'); } catch {}
-    updateSkillState();
-    const body = form.elements.namedItem('body') as HTMLTextAreaElement;
-    if (!body.value.trim()) body.value = `简短说明问题背景，以及为什么需要处理这个问题。\n\n## 目标与约束\n\n说明目标、环境和已知限制。\n\n## 方案选择\n\n解释采用该方案的原因。\n\n## 实现过程\n\n记录关键步骤和代码。\n\n## 验证与限制\n\n记录验证方式、容易踩坑的地方和方案边界。\n\n## 总结\n\n保留可以迁移到其他项目的经验。`;
-    const guide = $('[data-skill-guide]') as HTMLDetailsElement;
-    guide.open = true;
-    guide.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'nearest' });
-    status.textContent = '已导入 DemiZ 写作 Skill：载入文章结构与默认发布规则。';
-  });
-
-  const aiStatus = $('[data-ai-status]') as HTMLElement;
-  const aiResult = $('[data-ai-result]') as HTMLElement;
-  const aiOutput = $('[data-ai-output]') as HTMLTextAreaElement;
-  const aiButtons = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-ai-action]'));
-  aiButtons.forEach((button) => button.addEventListener('click', async () => {
-    const action = button.dataset.aiAction as 'outline' | 'draft' | 'polish';
-    const prompt = field('aiPrompt').value.trim();
-    const body = field('body').value.trim();
-    if (action === 'polish' && !body) { aiStatus.textContent = '请先在正文编辑器中写入需要润色的内容。'; return; }
-    if (action !== 'polish' && !prompt && !field('title').value.trim()) { aiStatus.textContent = '请先填写文章标题或写作要求。'; return; }
-    aiButtons.forEach((item) => item.disabled = true);
-    aiStatus.textContent = action === 'outline' ? '正在生成大纲……' : action === 'draft' ? '正在生成正文……' : '正在润色正文……';
-    try {
-      const response = await fetch('/api/assist', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          prompt,
-          useSkill: skillEnabled,
-          context: {
-            collection: collection(),
-            title: field('title').value,
-            description: field('description').value,
-            category: field('category').value,
-            tags: field('tags').value,
-            body,
-          },
-        }),
-      });
-      if (response.status === 401) { location.href = '/login'; return; }
-      const result = await response.json() as { text?: string; message?: string };
-      if (!response.ok || !result.text) throw new Error(result.message || 'AI 写作暂时不可用');
-      aiOutput.value = result.text.trim();
-      aiResult.hidden = false;
-      aiStatus.textContent = skillEnabled ? '生成完成，已应用 DemiZ Skill。请检查事实和代码后再写入正文。' : '生成完成。请检查事实和代码后再写入正文。';
-    } catch (error) {
-      aiStatus.textContent = error instanceof Error ? error.message : 'AI 写作暂时不可用，请稍后重试。';
-    } finally {
-      aiButtons.forEach((item) => item.disabled = false);
-    }
-  }));
-
-  $('[data-ai-replace]')?.addEventListener('click', () => {
-    const body = field('body');
-    if (body.value.trim() && !confirm('确定用 AI 结果替换当前正文吗？')) return;
-    body.value = aiOutput.value;
-    status.textContent = 'AI 结果已写入正文，请继续检查和编辑。';
-  });
-  $('[data-ai-append]')?.addEventListener('click', () => {
-    const body = field('body');
-    body.value = `${body.value.trim()}${body.value.trim() ? '\n\n' : ''}${aiOutput.value.trim()}`;
-    status.textContent = 'AI 结果已追加到正文，请继续检查和编辑。';
-  });
-
   $('[data-new-article]')?.addEventListener('click', startNewArticle);
   $('[data-save-draft]')?.addEventListener('click', () => saveBrowserDraft($('[data-save-draft]') as HTMLButtonElement));
   $('[data-save-draft-copy]')?.addEventListener('click', () => saveBrowserDraft($('[data-save-draft-copy]') as HTMLButtonElement, true));
@@ -493,12 +417,44 @@ import '../styles/sakura-theme.css';
     link.click(); URL.revokeObjectURL(link.href);
   });
   $('[data-import]')?.addEventListener('change', async (event) => {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
+    const input = event.target as HTMLInputElement;
+    const selectedFiles = Array.from(input.files || []);
+    const file = selectedFiles.find((item) => /\.(?:md|mdx)$/i.test(item.name) || /^(?:text\/markdown|text\/x-markdown)$/.test(item.type));
+    if (!file) {
+      status.textContent = '请同时选择一个 MD 文件；可一并选中它引用的图片。';
+      input.value = '';
+      return;
+    }
     const source = await file.text();
-    const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
-    (form.elements.namedItem('body') as HTMLTextAreaElement).value = match ? (match[2] || '').trim() : source;
-    status.textContent = '正文已导入；请检查右侧元信息。';
+    const match = source.replace(/^\uFEFF/, '').match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)([\s\S]*)$/);
+    const rawBody = match ? (match[2] || '').trim() : source.trim();
+    if (!match) {
+      const importedImages = importReferencedImages(rawBody, selectedFiles);
+      field('body').value = importedImages.body;
+      renderImages();
+      status.textContent = `正文已导入，未发现 frontmatter；已匹配 ${importedImages.imported} 张图片${importedImages.missing ? `，${importedImages.missing} 处本地图片引用未找到对应文件` : ''}。`;
+      input.value = '';
+      return;
+    }
+    const metadata = parseFrontmatter(match[1] || '');
+    for (const name of ['title', 'description', 'slug', 'published', 'updated', 'category']) {
+      if (metadata[name] !== undefined) field(name).value = String(metadata[name]);
+    }
+    if (Array.isArray(metadata.tags)) field('tags').value = metadata.tags.join(', ');
+    else if (metadata.tags !== undefined) field('tags').value = String(metadata.tags);
+    for (const name of ['featured', 'toc']) {
+      if (typeof metadata[name] === 'boolean') (field(name) as HTMLInputElement).checked = metadata[name] as boolean;
+    }
+    const importedCollection: Collection = metadata.gallery !== undefined && metadata.category === undefined ? 'life' : 'blog';
+    (form.elements.namedItem('collection') as RadioNodeList).value = importedCollection;
+    const slug = field('slug') as HTMLInputElement;
+    if (slug.value) slug.dataset.edited = 'true';
+    form.dispatchEvent(new Event('change', { bubbles: true }));
+    const importedImages = importReferencedImages(rawBody, selectedFiles);
+    field('body').value = importedImages.body;
+    renderImages();
+    status.textContent = `正文和 frontmatter 已导入，已匹配 ${importedImages.imported} 张图片${importedImages.missing ? `；${importedImages.missing} 处本地图片引用未找到对应文件` : ''}。`;
+    input.value = '';
   });
   $('[data-preview]')?.addEventListener('click', () => {
     const body = String(new FormData(form).get('body') || '');
@@ -521,6 +477,10 @@ import '../styles/sakura-theme.css';
   });
   $('[data-publish]')?.addEventListener('click', async () => {
     if (!form.reportValidity()) return;
+    if (/!\[[^\]]*\]\(\s*<?file:\/{2,}/i.test(field('body').value)) {
+      status.textContent = '正文仍包含本机 file:/// 图片路径。请重新“导入 MD 与图片”并同时选中对应图片，或删除该引用后再发布。';
+      return;
+    }
     const button = $('[data-publish]') as HTMLButtonElement;
     button.disabled = true; status.textContent = '正在提交文章与图片……';
     try {
@@ -543,12 +503,11 @@ import '../styles/sakura-theme.css';
     } catch (error) { status.textContent = error instanceof Error ? error.message : '发布失败，请稍后重试。'; }
     finally { button.disabled = false; }
   });
-  updateSkillState();
   void updateDraftCount().catch(() => {});
 </script>
 
 <style>
-  .writer{position:relative;margin-inline:calc(50% - 50vw);padding:clamp(1rem,3vw,2.5rem) max(1rem,calc((100vw - 92rem)/2));background:radial-gradient(circle at 12% 85%,rgba(89,221,214,.28),transparent 31%),radial-gradient(circle at 89% 79%,rgba(255,226,73,.28),transparent 34%);min-height:75vh}.writer__header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}.writer__header h1{margin:0;line-height:1.1}.writer__header p{margin:.2rem 0}.writer__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}.writer-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.55rem .9rem;border:1px solid var(--accent);border-radius:.75rem;background:var(--accent);color:white;cursor:pointer}.writer-button--ghost{border-color:var(--border);background:var(--surface);color:var(--text)}.writer-button--publish{background:#198f7c;border-color:#198f7c}.writer-button:disabled{cursor:wait;opacity:.6}.writer-draft-count{display:inline-grid;place-items:center;min-width:1.35rem;height:1.35rem;margin-left:.35rem;padding:0 .25rem;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,transparent);font-size:.75rem;font-weight:700}.writer__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,22rem);align-items:start;gap:1rem}.writer-card{min-width:0;padding:1rem;border:1px solid rgba(255,255,255,.7);border-radius:1.4rem;background:color-mix(in srgb,var(--surface) 80%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(18px)}fieldset.writer-card{margin:0}.writer-card legend{padding:0 .35rem;color:var(--muted);font-weight:700}.writer-card--editor{display:flex;flex-direction:column;min-height:65rem}.writer__title-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,.35fr);gap:.75rem}.writer label>span{display:block;margin-bottom:.25rem;color:var(--muted);font-size:.85rem}.writer input:not([type=radio]):not([type=checkbox]),.writer textarea{width:100%;padding:.7rem .8rem;border:1px solid var(--border);border-radius:.7rem;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text)}.writer__body{display:flex;flex:1;flex-direction:column;margin-top:.75rem}.writer__body textarea{flex:1;min-height:35rem;resize:vertical;font-family:"Cascadia Code",Consolas,monospace;line-height:1.7}.writer__sidebar{display:grid;gap:1rem}.writer__type{display:flex;gap:1rem}.writer__type label,.writer-check{display:flex!important;align-items:center;gap:.45rem}.writer__meta{display:grid;gap:.7rem}.writer-skill summary{cursor:pointer;font-weight:700}.writer-skill ol{padding-left:1.25rem;color:var(--muted);font-size:.9rem}.writer-skill p{margin-bottom:0;color:var(--muted);font-size:.85rem}.writer-ai{display:grid;gap:.7rem}.writer-ai__skill{justify-self:start;padding:.25rem .55rem;border:1px solid var(--border);border-radius:999px;color:var(--muted);font-size:.78rem}.writer-ai__skill.is-active{border-color:#2aa88f;background:rgba(42,168,143,.12);color:#137761}.writer-ai__actions{display:flex;flex-wrap:wrap;gap:.4rem}.writer-ai__actions button{min-height:2.35rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:.65rem;background:var(--bg);color:var(--text);cursor:pointer}.writer-ai__actions button:disabled{cursor:wait;opacity:.55}.writer-ai__status{margin:0;color:var(--muted);font-size:.82rem;line-height:1.55}.writer-ai__result{display:grid;gap:.6rem}.writer-ai__result[hidden]{display:none}.writer-ai__result textarea{font-family:"Cascadia Code",Consolas,monospace;font-size:.82rem;line-height:1.6}.writer-dropzone{display:grid;place-items:center;min-height:10rem;border:1px dashed var(--border);border-radius:1rem;color:var(--muted);cursor:pointer;text-align:center}.writer-dropzone--small{min-height:5rem}.writer-images{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.writer-images li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:.4rem;font-size:.8rem}.writer-images li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-images button{border:0;background:transparent;color:var(--muted);cursor:pointer}.writer-status{min-height:1.75rem;margin:1rem 0 0;text-align:center}.writer-dialog{width:min(52rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--bg);color:var(--text)}.writer-dialog::backdrop{background:rgba(10,12,18,.55);backdrop-filter:blur(4px)}.writer-dialog>form{display:flex;justify-content:flex-end}.writer-dialog>form button,.writer-drafts__header form button{border:0;background:transparent;color:var(--text);font-size:2rem;cursor:pointer}.writer-dialog .article{box-shadow:none}.writer-dialog--drafts{width:min(46rem,calc(100% - 2rem))}.writer-drafts__header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}.writer-drafts__header h2{margin:.1rem 0}.writer-drafts__header p{margin:.2rem 0}.writer-draft-list{display:grid;gap:.65rem;margin:1.25rem 0 0;padding:0;list-style:none}.writer-draft-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:.9rem;background:var(--surface)}.writer-draft-item>div:first-child{display:grid;min-width:0;gap:.2rem}.writer-draft-item strong,.writer-draft-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-draft-item span{color:var(--muted);font-size:.8rem}.writer-draft-item>div:last-child{display:flex;gap:.4rem}.writer-draft-item button{min-height:2.35rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:.65rem;background:var(--bg);color:var(--text);cursor:pointer}.writer-draft-item .writer-draft-item__delete{color:#b64747}.writer-drafts__empty{padding:2rem;text-align:center;color:var(--muted)}@media(max-width:900px){.writer__header{align-items:flex-start;flex-direction:column}.writer__actions{justify-content:flex-start}.writer__grid{grid-template-columns:1fr}.writer-card--editor{min-height:45rem}.writer__sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.writer{margin-inline:calc(50% - 50vw);padding-inline:.75rem}.writer__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.writer__title-row,.writer__sidebar{grid-template-columns:1fr}.writer-card--editor{min-height:38rem}.writer-images li{grid-template-columns:1fr auto}.writer-images input{grid-column:1/-1;grid-row:2}.writer-draft-item{align-items:flex-start;flex-direction:column}.writer-draft-item>div:last-child{width:100%}.writer-draft-item button{flex:1}}
+  .writer{position:relative;margin-inline:calc(50% - 50vw);padding:clamp(1rem,3vw,2.5rem) max(1rem,calc((100vw - 92rem)/2));background:radial-gradient(circle at 12% 85%,rgba(89,221,214,.28),transparent 31%),radial-gradient(circle at 89% 79%,rgba(255,226,73,.28),transparent 34%);min-height:75vh}.writer__header{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1.25rem}.writer__header h1{margin:0;line-height:1.1}.writer__header p{margin:.2rem 0}.writer__actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:.5rem}.writer-button{display:inline-flex;align-items:center;justify-content:center;min-height:2.75rem;padding:.55rem .9rem;border:1px solid var(--accent);border-radius:.75rem;background:var(--accent);color:white;cursor:pointer}.writer-button--ghost{border-color:var(--border);background:var(--surface);color:var(--text)}.writer-button--publish{background:#198f7c;border-color:#198f7c}.writer-button:disabled{cursor:wait;opacity:.6}.writer-draft-count{display:inline-grid;place-items:center;min-width:1.35rem;height:1.35rem;margin-left:.35rem;padding:0 .25rem;border-radius:999px;background:color-mix(in srgb,var(--accent) 14%,transparent);font-size:.75rem;font-weight:700}.writer__grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(17rem,22rem);align-items:start;gap:1rem}.writer-card{min-width:0;padding:1rem;border:1px solid rgba(255,255,255,.7);border-radius:1.4rem;background:color-mix(in srgb,var(--surface) 80%,transparent);box-shadow:var(--shadow);backdrop-filter:blur(18px)}fieldset.writer-card{margin:0}.writer-card legend{padding:0 .35rem;color:var(--muted);font-weight:700}.writer-card--editor{display:flex;flex-direction:column;min-height:65rem}.writer__title-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(10rem,.35fr);gap:.75rem}.writer label>span{display:block;margin-bottom:.25rem;color:var(--muted);font-size:.85rem}.writer input:not([type=radio]):not([type=checkbox]),.writer textarea{width:100%;padding:.7rem .8rem;border:1px solid var(--border);border-radius:.7rem;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--text)}.writer__body{display:flex;flex:1;flex-direction:column;margin-top:.75rem}.writer__body textarea{flex:1;min-height:35rem;resize:vertical;font-family:"Cascadia Code",Consolas,monospace;line-height:1.7}.writer__sidebar{display:grid;gap:1rem}.writer__type{display:flex;gap:1rem}.writer__type label,.writer-check{display:flex!important;align-items:center;gap:.45rem}.writer__meta{display:grid;gap:.7rem}.writer-dropzone{display:grid;place-items:center;min-height:10rem;border:1px dashed var(--border);border-radius:1rem;color:var(--muted);cursor:pointer;text-align:center}.writer-dropzone--small{min-height:5rem}.writer-images{display:grid;gap:.5rem;margin:.75rem 0 0;padding:0;list-style:none}.writer-images li{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;align-items:center;gap:.4rem;font-size:.8rem}.writer-images li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-images button{border:0;background:transparent;color:var(--muted);cursor:pointer}.writer-status{min-height:1.75rem;margin:1rem 0 0;text-align:center}.writer-dialog{width:min(52rem,calc(100% - 2rem));max-height:90vh;padding:1rem;border:1px solid var(--border);border-radius:1rem;background:var(--bg);color:var(--text)}.writer-dialog::backdrop{background:rgba(10,12,18,.55);backdrop-filter:blur(4px)}.writer-dialog>form{display:flex;justify-content:flex-end}.writer-dialog>form button,.writer-drafts__header form button{border:0;background:transparent;color:var(--text);font-size:2rem;cursor:pointer}.writer-dialog .article{box-shadow:none}.writer-dialog--drafts{width:min(46rem,calc(100% - 2rem))}.writer-drafts__header{display:flex;align-items:flex-start;justify-content:space-between;gap:1rem}.writer-drafts__header h2{margin:.1rem 0}.writer-drafts__header p{margin:.2rem 0}.writer-draft-list{display:grid;gap:.65rem;margin:1.25rem 0 0;padding:0;list-style:none}.writer-draft-item{display:flex;align-items:center;justify-content:space-between;gap:1rem;padding:.85rem 1rem;border:1px solid var(--border);border-radius:.9rem;background:var(--surface)}.writer-draft-item>div:first-child{display:grid;min-width:0;gap:.2rem}.writer-draft-item strong,.writer-draft-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.writer-draft-item span{color:var(--muted);font-size:.8rem}.writer-draft-item>div:last-child{display:flex;gap:.4rem}.writer-draft-item button{min-height:2.35rem;padding:.4rem .7rem;border:1px solid var(--border);border-radius:.65rem;background:var(--bg);color:var(--text);cursor:pointer}.writer-draft-item .writer-draft-item__delete{color:#b64747}.writer-drafts__empty{padding:2rem;text-align:center;color:var(--muted)}@media(max-width:900px){.writer__header{align-items:flex-start;flex-direction:column}.writer__actions{justify-content:flex-start}.writer__grid{grid-template-columns:1fr}.writer-card--editor{min-height:45rem}.writer__sidebar{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.writer{margin-inline:calc(50% - 50vw);padding-inline:.75rem}.writer__actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}.writer__title-row,.writer__sidebar{grid-template-columns:1fr}.writer-card--editor{min-height:38rem}.writer-images li{grid-template-columns:1fr auto}.writer-images input{grid-column:1/-1;grid-row:2}.writer-draft-item{align-items:flex-start;flex-direction:column}.writer-draft-item>div:last-child{width:100%}.writer-draft-item button{flex:1}}
 </style>
 </body>
 </html>
