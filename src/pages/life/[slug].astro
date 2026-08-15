@@ -17,17 +17,17 @@ export async function getStaticPaths() {
 const { entry, previous, next } = Astro.props;
 const { Content, headings } = await render(entry);
 ---
-<BaseLayout title={`${entry.data.title} | 生活日志`} description={entry.data.description} image={entry.data.cover} type="article" publishedTime={entry.data.published} updatedTime={entry.data.updated} tags={entry.data.tags}>
+<BaseLayout title={`${entry.data.title} | 日常手账`} description={entry.data.description} image={entry.data.cover} type="article" publishedTime={entry.data.published} updatedTime={entry.data.updated} tags={entry.data.tags}>
   <div class="article-layout">
     <article class="article" data-article-content>
-      <p><a href={sitePath('/life/')}>← 返回生活日志</a></p>
+      <p><a href={sitePath('/life/')}>← 返回日常手账</a></p>
       <header class="article-hero article-hero--life"><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
       <Content />
       <ArticleNavigation
         previous={previous && { title: previous.data.title, path: `/life/${previous.data.slug}/` }}
         next={next && { title: next.data.title, path: `/life/${next.data.slug}/` }}
         indexPath="/life/"
-        indexLabel="返回生活日志"
+        indexLabel="返回日常手账"
       />
     </article>
     <ArticleReaderTools entryKey={`life:${entry.data.slug}`} headings={headings} />

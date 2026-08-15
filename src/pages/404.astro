@@ -1,4 +1,4 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro'; import {sitePath} from '../lib/urls';
 ---
-<BaseLayout title="页面未找到" description="请求的页面不存在" noindex><section class="hero"><p class="eyebrow">404</p><h1>页面未找到</h1><p>你访问的页面不存在或已经移动。</p><a href={sitePath('/')}>返回首页</a></section></BaseLayout>
+<BaseLayout title="找不到这张库洛牌" description="请求的页面不存在" noindex><section class="hero lost-card"><div class="lost-card-symbol" aria-hidden="true">?</div><div><p class="eyebrow">404 · Lost Card</p><h1>找不到这张库洛牌</h1><p>这张魔法卡牌可能藏起来了，返回首页重新寻找吧。</p><a class="secondary-button" href={sitePath('/')}>返回魔法资料库</a></div></section></BaseLayout>

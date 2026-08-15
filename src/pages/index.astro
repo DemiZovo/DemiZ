@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeLikeButton from '../components/HomeLikeButton.astro';
+import MagicCompanion from '../components/MagicCompanion.astro';
 import { entryPath, getPublicContent } from '../lib/content';
 import { siteConfig } from '../config/site';
 import { sitePath } from '../lib/urls';
@@ -9,24 +10,20 @@ const featuredEntries = allEntries.filter(entry => entry.data.featured);
 const entries = allEntries.slice(0, 6);
 ---
 <BaseLayout>
-  <section class="hero hero-profile">
-    <img
-      class="avatar-placeholder"
-      src={sitePath('/images/profile/profile-sakura.jpeg')}
-      alt="DemiZ 的头像"
-    />
-    <div>
-      <p class="eyebrow">程序员 · 学习者 · 生活记录者</p>
-      <h1>{siteConfig.name}</h1>
-      <p>{siteConfig.description}</p>
+  <section class="hero home-magic-hero">
+    <div class="hero-magic-copy">
+      <p class="eyebrow">封印解除 · Welcome</p>
+      <h1 class="typed-slogan" aria-label="敲下第一行 HELLO WORLD，开启魔法之旅"><span>敲下第一行&nbsp;</span><code>HELLO WORLD</code><span>，开启魔法之旅</span></h1>
+      <p>我是 {siteConfig.name}。把技术学习、工程实践和日常灵感，收进自己的魔法资料库。</p>
       <div class="hero-links">
-        <p><a href={siteConfig.author.github}>GitHub</a> · <a href={siteConfig.author.leetcode}>LeetCode</a> · <a href={sitePath('/blog/')}>阅读技术文章</a></p>
+        <p><a href={siteConfig.author.github}>GitHub</a> · <a href={siteConfig.author.leetcode}>LeetCode</a> · <a href={sitePath('/blog/')}>翻开魔法笔记</a></p>
         <HomeLikeButton />
       </div>
     </div>
+    <MagicCompanion />
   </section>
   {featuredEntries.length > 0 && (
-    <section aria-labelledby="featured">
+    <section class="home-updates" aria-labelledby="featured">
       <p class="eyebrow">Featured</p>
       <h2 id="featured">精选文章</h2>
       <div class="grid">{featuredEntries.map(entry => <article class="card">
@@ -37,7 +34,7 @@ const entries = allEntries.slice(0, 6);
       </article>)}</div>
     </section>
   )}
-  <section aria-labelledby="recent">
+  <section class="home-updates" aria-labelledby="recent">
     <h2 id="recent">最近更新</h2>
     <div class="grid">{entries.map(entry => <article class="card">
       <p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p>

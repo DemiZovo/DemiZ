@@ -8,16 +8,16 @@ type NavItem = { href: string; label: string; icon: IconName };
 
 const primaryLinks: NavItem[] = [
   { href: '/', label: '首页', icon: 'home' },
-  { href: '/blog/', label: '博客', icon: 'blog' },
-  { href: '/projects/', label: '项目', icon: 'projects' },
-  { href: '/life/', label: '生活', icon: 'life' },
+  { href: '/blog/', label: '魔法笔记', icon: 'blog' },
+  { href: '/projects/', label: '宝物柜', icon: 'projects' },
+  { href: '/life/', label: '日常手账', icon: 'life' },
   { href: '/about/', label: '关于', icon: 'about' },
 ];
 const secondaryLinks: NavItem[] = [
-  { href: '/archives/', label: '归档', icon: 'archive' },
-  { href: '/categories/', label: '分类', icon: 'category' },
-  { href: '/tags/', label: '标签', icon: 'tag' },
-  { href: '/guestbook/', label: '留言', icon: 'message' },
+  { href: '/archives/', label: '库洛牌全书', icon: 'archive' },
+  { href: '/categories/', label: '魔法属性', icon: 'category' },
+  { href: '/tags/', label: '卡牌标签', icon: 'tag' },
+  { href: '/guestbook/', label: '魔法许愿簿', icon: 'message' },
 ];
 const current = (href: string) => href === '/' ? pathname === sitePath('/') : pathname.startsWith(sitePath(href));
 const secondaryActive = secondaryLinks.some(({ href }) => current(href));

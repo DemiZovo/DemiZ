@@ -5,11 +5,11 @@ import { sitePath } from '../../lib/urls';
 
 const entries = await getPublicLife();
 ---
-<BaseLayout title="生活日志">
-  <section class="hero"><p class="eyebrow">Life</p><h1>生活日志</h1><p>技术之外，也保留真实而缓慢的日常。</p></section>
-  <div class="grid">
+<BaseLayout title="日常手账">
+  <section class="hero"><p class="eyebrow">Daily Journal</p><h1>日常手账</h1><p>放学后的风、偶然的心情，以及技术之外真实而缓慢的日常。</p></section>
+  <div class="grid journal-grid">
     {entries.map(entry => (
-      <article class="card article-card">
+      <article class="card article-card journal-card">
         <p class="meta"><time datetime={entry.data.published.toISOString()}>{entry.data.published.toLocaleDateString('zh-CN')}</time></p>
         <h2><a class="card-link" href={sitePath(entryPath(entry))}>{entry.data.title}</a></h2>
         <p>{entry.data.description}</p>

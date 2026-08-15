@@ -6,17 +6,25 @@ import { sitePath } from '../../lib/urls';
 // getPublicBlog() is the canonical newest-first ordering shared with article navigation.
 const posts = await getPublicBlog();
 ---
-<BaseLayout title="技术博客">
-  <section class="hero"><p class="eyebrow">Blog</p><h1>技术博客</h1><p>记录工程实践、设计取舍和问题复盘。</p></section>
-  <div class="grid">
+<BaseLayout title="魔法笔记">
+  <section class="hero"><p class="eyebrow">Coding Grimoire</p><h1>魔法笔记</h1><p>把学到的技术、解决的 bug 和工程取舍，收进一张张知识卡牌。</p></section>
+  <div class="grid magic-note-grid">
     {posts.map(post => (
-      <article class="card article-card">
-        <p class="meta"><time datetime={post.data.published.toISOString()}>{post.data.published.toLocaleDateString('zh-CN')}</time> · <a href={sitePath(`/categories/${encodeURIComponent(post.data.category)}/`)}>{post.data.category}</a></p>
-        <h2><a class="card-link" href={sitePath(entryPath(post))}>{post.data.title}</a></h2>
-        <p>{post.data.description}</p>
-        <div class="card-footer">
-          <ul class="tags">{post.data.tags.map(tag => <li><a class="tag" href={sitePath(`/tags/${encodeURIComponent(tag)}/`)}>{tag}</a></li>)}</ul>
-          <span class="read-badge" data-read-marker={`blog:${post.data.slug}`} hidden>✓ 已读</span>
+      <article class="article-card magic-card">
+        <div class="magic-card-inner">
+          <div class="magic-card-face magic-card-front">
+            <span class="card-sigil" aria-hidden="true">✦</span>
+            <p class="meta"><time datetime={post.data.published.toISOString()}>{post.data.published.toLocaleDateString('zh-CN')}</time></p>
+            <h2>{post.data.title}</h2>
+            <p class="card-element">{post.data.category}</p>
+          </div>
+          <div class="magic-card-face magic-card-back">
+            <p class="eyebrow">Card Note</p>
+            <p>{post.data.description}</p>
+            <ul class="tags">{post.data.tags.slice(0, 3).map(tag => <li><span class="tag">{tag}</span></li>)}</ul>
+            <a class="card-open" href={sitePath(entryPath(post))}>翻开笔记 <span aria-hidden="true">→</span></a>
+            <span class="read-badge" data-read-marker={`blog:${post.data.slug}`} hidden>✓ 已读</span>
+          </div>
         </div>
       </article>
     ))}

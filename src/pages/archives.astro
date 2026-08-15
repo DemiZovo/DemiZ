@@ -6,8 +6,9 @@ import { sitePath } from '../lib/urls';
 const entries = await getPublicContent();
 const groups = Map.groupBy(entries, entry => String(entry.data.published.getFullYear()));
 ---
-<BaseLayout title="时间归档">
-  <section class="hero"><p class="eyebrow">Archives</p><h1>时间归档</h1><p>按发布时间从新到旧排列。</p></section>
+<BaseLayout title="库洛牌全书">
+  <section class="hero"><p class="eyebrow">The Card Book</p><h1>库洛牌全书</h1><p>所有公开记录按时间排列，重新翻开曾经收集的知识与日常。</p></section>
+  <div class="archive-book">
   {[...groups].map(([year, items]) => (
     <section aria-labelledby={`year-${year}`} class="archive-year">
       <h2 id={`year-${year}`}>{year}</h2>
@@ -25,4 +26,5 @@ const groups = Map.groupBy(entries, entry => String(entry.data.published.getFull
       </ul>
     </section>
   ))}
+  </div>
 </BaseLayout>

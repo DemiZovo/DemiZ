@@ -6,16 +6,18 @@ import { sitePath } from '../lib/urls';
 ---
 <BaseLayout title={`关于我 | ${siteConfig.name}`}>
   <article class="article">
-    <p class="eyebrow">About</p>
+    <p class="eyebrow">Ordinary Magic Learner</p>
     <h1>关于我</h1>
-    <img
-      class="avatar-placeholder avatar-large"
-      src={sitePath('/images/profile/profile-sakura.jpeg')}
-      alt="DemiZ 的头像"
-    />
-    <p>你好，我是 {siteConfig.author.name}。热爱生活，热爱学习。</p>
+    <div class="portrait-card portrait-card--large">
+      <img
+        class="avatar-placeholder avatar-large"
+        src={sitePath('/images/profile/profile-sakura.jpeg')}
+        alt="DemiZ 的头像"
+      />
+    </div>
+    <p>你好，我是 {siteConfig.author.name}。像练习魔法一样持续学习代码，也认真收藏普通生活里的小事。</p>
     <h2>这里记录什么</h2>
-    <p>这里用于整理代码学习笔记，也保存技术之外的日常记录。</p>
+    <p>这里用于整理新技术、工程实践和偶尔捣乱的 bug，也保存技术之外的日常记录。</p>
     <h2>联系</h2>
     <div class="contact-links"><a href={siteConfig.author.github}>GitHub</a><CopyEmail email={siteConfig.author.email} /></div>
   </article>

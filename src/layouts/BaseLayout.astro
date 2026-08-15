@@ -2,11 +2,13 @@
 import Analytics from '../components/Analytics.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+import MagicEffects from '../components/MagicEffects.astro';
 import ReadMarkers from '../components/ReadMarkers.astro';
 import { siteConfig } from '../config/site';
 import { sitePath } from '../lib/urls';
 import '../styles/global.css';
 import '../styles/features.css';
+import '../styles/sakura-theme.css';
 
 interface Props {
   title?: string;
@@ -21,6 +23,8 @@ interface Props {
 const { title = siteConfig.name, description = siteConfig.description, image = siteConfig.defaultSocialImage, type = 'website', publishedTime, updatedTime, tags = [], noindex = false } = Astro.props;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const ogImage = new URL(sitePath(image), Astro.site);
+const relativePath = Astro.url.pathname.replace(sitePath('/'), '/');
+const section = relativePath === '/' ? 'home' : relativePath.split('/').filter(Boolean)[0] ?? 'home';
 const structuredData = type === 'article'
   ? {
       '@context': 'https://schema.org', '@type': 'BlogPosting', headline: title, description,
@@ -40,7 +44,7 @@ const structuredData = type === 'article'
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f6f7fb" />
+    <meta name="theme-color" content="#f8f2ef" data-theme-color />
     <link rel="icon" type="image/svg+xml" href={sitePath('/favicon.svg')} />
     <script is:inline>
       (() => {
@@ -51,6 +55,7 @@ const structuredData = type === 'article'
             : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           document.documentElement.dataset.theme = theme;
           document.documentElement.style.colorScheme = theme;
+          document.querySelector('meta[data-theme-color]')?.setAttribute('content', theme === 'dark' ? '#211a1d' : '#f8f2ef');
         } catch {}
       })();
     </script>
@@ -77,8 +82,9 @@ const structuredData = type === 'article'
     <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData).replace(/</g, '\\u003c')} />
     <Analytics />
   </head>
-  <body>
+  <body data-section={section}>
     <a class="skip-link" href="#main-content">跳到正文</a>
+    <MagicEffects isHome={section === 'home'} />
     <div class="page-shell">
       <Header pathname={Astro.url.pathname} />
       <main id="main-content" class="site-main"><slot /></main>
@@ -98,6 +104,7 @@ const structuredData = type === 'article'
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = next;
         document.documentElement.style.colorScheme = next;
+        document.querySelector('meta[data-theme-color]')?.setAttribute('content', next === 'dark' ? '#211a1d' : '#f8f2ef');
         localStorage.setItem('theme', next);
         update();
       });

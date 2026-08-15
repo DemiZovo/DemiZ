@@ -1,0 +1,42 @@
+---
+import { sitePath } from '../lib/urls';
+
+const outfits = [
+  { id: 'clow', src: sitePath('/images/character/magic-companion-pink.png'), label: '初代库洛战斗服' },
+  { id: 'star', src: sitePath('/images/character/magic-companion-night.png'), label: '星之牌战斗服' },
+  { id: 'school', src: sitePath('/images/character/magic-companion-school.png'), label: '友枝小学校服' },
+  { id: 'casual', src: sitePath('/images/character/magic-companion-casual.png'), label: '日常连衣裙私服' },
+  { id: 'formal', src: sitePath('/images/character/magic-companion-pink.png'), label: '礼服' },
+];
+const firstOutfit = outfits[0]!;
+---
+<aside class="magic-companion" data-magic-companion data-outfits={JSON.stringify(outfits)} aria-label="木之本樱换装展示">
+  <button class="companion-character" type="button" data-companion-cycle aria-label="切换魔法伙伴服装">
+    <img src={firstOutfit.src} alt="木之本樱，当前穿着初代库洛战斗服" loading="lazy" decoding="async" data-companion-image />
+  </button>
+  <span class="companion-hint">点击更换服装</span>
+</aside>
+
+<script>
+  const companion = document.querySelector('[data-magic-companion]');
+  const outfits: Array<{ id: string; src: string; label: string }> = companion instanceof HTMLElement ? JSON.parse(companion.dataset.outfits ?? '[]') : [];
+  const image = document.querySelector('[data-companion-image]');
+  const safeGet = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
+  const safeSet = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch {} };
+  const saved = outfits.findIndex((item) => item.id === safeGet('magic-companion-outfit'));
+  let current = saved >= 0 ? saved : 0;
+
+  const render = () => {
+    const outfit = outfits[current]!;
+    if (image instanceof HTMLImageElement) {
+      image.src = outfit.src;
+      image.alt = `原创魔法伙伴，当前穿着${outfit.label}`;
+    }
+  };
+  render();
+  document.querySelectorAll('[data-companion-cycle]').forEach((button) => button.addEventListener('click', () => {
+    current = (current + 1) % outfits.length;
+    safeSet('magic-companion-outfit', outfits[current]!.id);
+    render();
+  }));
+</script>
