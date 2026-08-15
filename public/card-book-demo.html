@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CardBookConvergence Demo</title>
+  <style>
+    body{margin:0;padding:2rem;background:#f8f2ed;color:#522636;font-family:system-ui,sans-serif}
+    #card-book-wrap{position:relative;isolation:isolate;width:min(900px,100%);height:min(70vh,620px);min-height:360px;margin:auto;overflow:hidden;border:1px solid #d8b8a5;border-radius:20px;background:transparent}
+    .book{position:absolute;z-index:0;left:50%;top:50%;display:grid;place-items:center;width:150px;aspect-ratio:.72;translate:-50% -50%;border:5px solid #742c46;border-radius:9px;background:#9b3d59;color:#f5d08a;box-shadow:0 18px 45px #5b263633}
+    button{position:absolute;z-index:2;right:1rem;bottom:1rem;padding:.65rem 1rem;border:1px solid #742c46;border-radius:999px;background:#fffaf6;color:#742c46;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div id="card-book-wrap"><div class="book">✦<br>CLOW</div><button type="button">重播</button></div>
+  <script type="module">
+    import { CardBookConvergence } from './js/CardBookConvergence.js';
+    const mount = document.querySelector('#card-book-wrap');
+    const effect = new CardBookConvergence(mount, { textureUrls: [], cardCount: 157 });
+    mount.querySelector('button').addEventListener('click', () => effect.restart());
+    mount.addEventListener('cardbookcomplete', (event) => console.info('收纳完成', event.detail));
+    addEventListener('pagehide', () => effect.destroy(), { once: true });
+  </script>
+</body>
+</html>

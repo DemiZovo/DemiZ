@@ -5,6 +5,7 @@ import Footer from '../components/Footer.astro';
 import MagicEffects from '../components/MagicEffects.astro';
 import ReadMarkers from '../components/ReadMarkers.astro';
 import MagicScrollEffects from '../components/MagicScrollEffects.astro';
+import CardBookConvergence from '../components/CardBookConvergence.astro';
 import { siteConfig } from '../config/site';
 import { sitePath } from '../lib/urls';
 import '../styles/global.css';
@@ -85,7 +86,8 @@ const structuredData = type === 'article'
   </head>
   <body data-section={section}>
     <a class="skip-link" href="#main-content">跳到正文</a>
-    <MagicEffects isHome={section === 'home'} />
+    {section === 'home' && <CardBookConvergence />}
+    <MagicEffects />
     <MagicScrollEffects />
     <div class="page-shell">
       <Header pathname={Astro.url.pathname} />

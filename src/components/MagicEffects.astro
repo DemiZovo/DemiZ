@@ -1,23 +1,8 @@
 ---
-const { isHome = false } = Astro.props;
 ---
 <div class="magic-effects" aria-hidden="true" data-magic-effects>
   {Array.from({ length: 12 }, (_, index) => <i style={`--i:${index}`}></i>)}
 </div>
-
-{isHome && (
-  <div class="seal-gate" data-seal-gate role="dialog" aria-modal="true" aria-labelledby="seal-title">
-    <div class="seal-card">
-      <span class="seal-star" aria-hidden="true">✦</span>
-      <p class="eyebrow">DemiZ's Magic Archive</p>
-      <h1 id="seal-title">封印解除</h1>
-      <p>打开这本记录代码魔法与平凡日常的资料库。</p>
-      <button type="button" class="seal-key" data-seal-key>
-        <span aria-hidden="true">✧</span> 开启资料库
-      </button>
-    </div>
-  </div>
-)}
 
 <div class="sparkle-layer" aria-hidden="true" data-sparkle-layer></div>
 
@@ -25,7 +10,6 @@ const { isHome = false } = Astro.props;
   const root = document.documentElement;
   const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const sparkleLayer = document.querySelector('[data-sparkle-layer]');
-  const gate = document.querySelector('[data-seal-gate]');
   const readStorage = (storage: Storage, key: string) => {
     try { return storage.getItem(key); } catch { return null; }
   };
@@ -45,12 +29,6 @@ const { isHome = false } = Astro.props;
   let enabled = !reduceMotion && readStorage(localStorage, 'magic-effects') !== 'off';
   setEffects(enabled);
 
-  if (gate && readStorage(sessionStorage, 'seal-opened') !== 'yes' && !reduceMotion) {
-    root.classList.add('magic-ready');
-  } else {
-    gate?.remove();
-  }
-
   const burstAt = (x: number, y: number) => {
     if (!enabled || reduceMotion || !(sparkleLayer instanceof HTMLElement)) return;
     for (let index = 0; index < 9; index += 1) {
@@ -64,7 +42,7 @@ const { isHome = false } = Astro.props;
     }
   };
   document.addEventListener('click', (event) => {
-    const key = event.target instanceof Element ? event.target.closest('[data-seal-key], [data-hero-seal-key]') : null;
+    const key = event.target instanceof Element ? event.target.closest('[data-hero-seal-key]') : null;
     if (!(key instanceof HTMLElement)) return;
     const box = key.getBoundingClientRect();
     if (key.hasAttribute('data-hero-seal-key')) {
@@ -73,12 +51,6 @@ const { isHome = false } = Astro.props;
       writeStorage(localStorage, 'magic-effects', enabled ? 'on' : 'off');
       if (enabled) burstAt(box.left + box.width / 2, box.top + box.height / 2);
       return;
-    }
-    burstAt(box.left + box.width / 2, box.top + box.height / 2);
-    if (key.hasAttribute('data-seal-key')) {
-      writeStorage(sessionStorage, 'seal-opened', 'yes');
-      gate?.classList.add('is-opening');
-      setTimeout(() => gate?.remove(), 700);
     }
   });
 
