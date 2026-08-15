@@ -78,7 +78,7 @@ button,input,textarea,select{font:inherit}
 
 @media(max-width:760px){
   .page-shell{width:calc(100% - 1rem)}
-  .site-header{top:.5rem;gap:.65rem;margin-block:.5rem 1.25rem;padding:.65rem}
+  .site-header{position:relative;top:.5rem;gap:.65rem;margin-block:.5rem 1.25rem;padding:.65rem}
   .site-header nav{overflow:visible}
   .site-header ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.35rem;width:100%}
   .site-header nav a{display:flex;min-height:2.75rem;align-items:center;justify-content:center;padding:.45rem .3rem;text-align:center;line-height:1.25}
