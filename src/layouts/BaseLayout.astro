@@ -46,7 +46,7 @@ const structuredData = type === 'article'
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#f2dce3" data-theme-color />
+    <meta name="theme-color" content="#fffaf5" data-theme-color />
     <link rel="icon" type="image/svg+xml" href={sitePath('/favicon.svg')} />
     <script is:inline>
       (() => {
@@ -57,7 +57,7 @@ const structuredData = type === 'article'
             : matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
           document.documentElement.dataset.theme = theme;
           document.documentElement.style.colorScheme = theme;
-          document.querySelector('meta[data-theme-color]')?.setAttribute('content', theme === 'dark' ? '#251a1f' : '#f2dce3');
+          document.querySelector('meta[data-theme-color]')?.setAttribute('content', theme === 'dark' ? '#251a1f' : '#fffaf5');
         } catch {}
       })();
     </script>
@@ -108,7 +108,7 @@ const structuredData = type === 'article'
         const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
         document.documentElement.dataset.theme = next;
         document.documentElement.style.colorScheme = next;
-        document.querySelector('meta[data-theme-color]')?.setAttribute('content', next === 'dark' ? '#251a1f' : '#f2dce3');
+        document.querySelector('meta[data-theme-color]')?.setAttribute('content', next === 'dark' ? '#251a1f' : '#fffaf5');
         localStorage.setItem('theme', next);
         update();
       });

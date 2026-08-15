@@ -3,24 +3,24 @@ import { sitePath } from '../lib/urls';
 ---
 
 <div class="card-book-entry" data-card-book-entry hidden>
-  <section class="card-book-stage" id="card-book-wrap" role="dialog" aria-modal="true" aria-labelledby="card-book-title" aria-describedby="card-book-description">
+  <section class="card-book-stage" id="card-book-wrap" role="dialog" aria-modal="true" aria-labelledby="card-book-title" aria-describedby="card-book-description card-book-status" tabindex="0">
     <div class="card-book-copy">
       <p class="eyebrow">DemiZ's Magic Archive</p>
       <h1 id="card-book-title">魔法卡牌，归档。</h1>
       <p id="card-book-description">157 张记忆从四方归来，收进这本持续生长的资料库。</p>
     </div>
-    <button class="clow-book" type="button" data-card-book-enter disabled aria-describedby="card-book-status">
+    <button class="clow-book" type="button" data-card-book-enter aria-disabled="true" aria-label="跳过卡牌收纳并进入首页" aria-describedby="card-book-status">
       <span class="clow-book-rule" aria-hidden="true"></span>
       <span class="clow-book-star" aria-hidden="true">✦</span>
       <strong>CLOW</strong>
       <small data-card-book-action>正在收纳卡牌…</small>
     </button>
-    <p class="card-book-status" id="card-book-status" role="status" aria-live="polite" data-card-book-status>卡牌正在收纳，请稍候。</p>
+    <p class="card-book-status" id="card-book-status" role="status" aria-live="polite" data-card-book-status>卡牌正在收纳。点击任意位置可直接进入首页。</p>
   </section>
 </div>
 
 <style>
-  .card-book-entry{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:clamp(.75rem,3vw,2rem);background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--surface-raised) 58%,transparent),transparent 34rem),var(--bg);backdrop-filter:blur(12px);transition:opacity .55s ease,filter .55s ease}
+  .card-book-entry{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:clamp(.75rem,3vw,2rem);background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--surface-raised) 58%,transparent),transparent 34rem),var(--bg);backdrop-filter:blur(12px);transition:opacity .55s ease,filter .55s ease;cursor:pointer}
   .card-book-entry[hidden]{display:none}
   .card-book-entry.is-leaving{opacity:0;filter:blur(8px);pointer-events:none}
   .card-book-stage{position:relative;isolation:isolate;width:min(62rem,100%);height:min(76svh,42rem);min-height:28rem;overflow:hidden;border:1px solid color-mix(in srgb,var(--border) 72%,transparent);border-radius:1.35rem;background:linear-gradient(145deg,var(--surface-raised),var(--surface));box-shadow:var(--shadow-neumo)}
@@ -30,9 +30,8 @@ import { sitePath } from '../lib/urls';
   .clow-book{position:absolute;z-index:1;left:50%;top:55%;display:flex;flex-direction:column;align-items:center;justify-content:center;width:clamp(8rem,18vw,11rem);aspect-ratio:.72;translate:-50% -50%;overflow:hidden;padding:0;border:.36rem solid #6f263e;border-radius:.65rem;background:linear-gradient(145deg,#a94661,#74283f);color:#f2cc7c;box-shadow:0 1.5rem 3.5rem rgba(86,32,49,.3),inset 0 0 0 .18rem #d49b55,inset 0 0 0 .46rem #852d47;text-align:center;transition:transform .22s ease,box-shadow .22s ease;cursor:pointer}
   .clow-book::before,.clow-book::after{position:absolute;inset:.85rem;border:1px solid currentColor;border-radius:50% 50% 45% 45%;content:"";opacity:.72;pointer-events:none}
   .clow-book::after{inset:1.2rem;border-radius:.35rem}
-  .clow-book:disabled{cursor:wait}
-  .clow-book:not(:disabled):hover{transform:translateY(-.35rem);box-shadow:0 2rem 4rem rgba(86,32,49,.38),inset 0 0 0 .18rem #d49b55,inset 0 0 0 .46rem #852d47}
-  .clow-book:not(:disabled):focus-visible{outline:3px solid var(--gold);outline-offset:.45rem}
+  .clow-book:hover{transform:translateY(-.35rem);box-shadow:0 2rem 4rem rgba(86,32,49,.38),inset 0 0 0 .18rem #d49b55,inset 0 0 0 .46rem #852d47}
+  .clow-book:focus-visible{outline:3px solid var(--gold);outline-offset:.45rem}
   .clow-book-rule{position:absolute;left:.7rem;top:0;bottom:0;width:.25rem;background:#d59b58;box-shadow:.35rem 0 #6f263e}
   .clow-book-star{position:relative;z-index:1;font-size:clamp(2.3rem,6vw,4rem);line-height:1}
   .clow-book strong,.clow-book small{position:relative;z-index:1;letter-spacing:.16em}
@@ -53,32 +52,17 @@ import { sitePath } from '../lib/urls';
   if (gate instanceof HTMLElement && mount instanceof HTMLElement && !alreadyEntered) {
     gate.hidden = false;
     if (page instanceof HTMLElement) page.inert = true;
-    const { CardBookConvergence } = await import(moduleUrl);
     const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const enterButton = mount.querySelector('[data-card-book-enter]');
     const action = mount.querySelector('[data-card-book-action]');
     const status = mount.querySelector('[data-card-book-status]');
-    const animation = new CardBookConvergence(mount, {
-      cardCount: 157,
-      cardWidth: 0.72,
-      cardHeight: 1.08,
-      flyDistance: 8,
-      duration: reduceMotion ? 1 : 2400,
-      delayMin: 0,
-      delayMax: reduceMotion ? 0 : 1800,
-      perspective: 42,
-      antialias: true,
-      textureUrls: [], // 可传入 157 个跨域可访问的卡牌 URL；空值或失败项自动使用占位卡。
-    });
-    mount.addEventListener('cardbookcomplete', () => {
-      if (enterButton instanceof HTMLButtonElement) enterButton.disabled = false;
-      if (action) action.textContent = '点击进入资料库';
-      if (status) status.textContent = '157 张卡牌已全部收纳。再次点击魔法书进入首页。';
-      enterButton?.focus();
-    }, { once: true });
-    enterButton?.addEventListener('click', () => {
+    let animation;
+    let leaving = false;
+    const enterHomepage = () => {
+      if (leaving) return;
+      leaving = true;
       try { sessionStorage.setItem('card-book-entered', 'yes'); } catch {}
-      animation.destroy();
+      animation?.destroy();
       gate.classList.add('is-leaving');
       window.setTimeout(() => {
         gate.remove();
@@ -87,9 +71,44 @@ import { sitePath } from '../lib/urls';
           page.querySelector('a,button')?.focus();
         }
       }, reduceMotion ? 0 : 550);
+    };
+    gate.addEventListener('click', enterHomepage);
+    gate.addEventListener('keydown', (event) => {
+      if (!['Enter', ' ', 'Escape'].includes(event.key)) return;
+      event.preventDefault();
+      enterHomepage();
     });
-    window.cardBookAnimation = animation;
-    addEventListener('pagehide', () => animation.destroy(), { once: true });
+    mount.focus();
+
+    try {
+      const { CardBookConvergence } = await import(moduleUrl);
+      if (!leaving) {
+        animation = new CardBookConvergence(mount, {
+          cardCount: 157,
+          cardWidth: 0.72,
+          cardHeight: 1.08,
+          flyDistance: 8,
+          duration: reduceMotion ? 1 : 2400,
+          delayMin: 0,
+          delayMax: reduceMotion ? 0 : 1800,
+          perspective: 42,
+          antialias: true,
+          textureUrls: [], // 可传入 157 个跨域可访问的卡牌 URL；空值或失败项自动使用占位卡。
+        });
+        window.cardBookAnimation = animation;
+      }
+    } catch {
+      if (action) action.textContent = '点击进入资料库';
+      if (status) status.textContent = '动画暂时无法加载，点击任意位置进入首页。';
+    }
+    mount.addEventListener('cardbookcomplete', () => {
+      enterButton?.setAttribute('aria-disabled', 'false');
+      enterButton?.setAttribute('aria-label', '进入首页');
+      if (action) action.textContent = '点击进入资料库';
+      if (status) status.textContent = '157 张卡牌已全部收纳。点击任意位置进入首页。';
+      enterButton?.focus();
+    }, { once: true });
+    addEventListener('pagehide', () => animation?.destroy(), { once: true });
   } else {
     gate?.remove();
   }

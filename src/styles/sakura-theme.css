@@ -1,23 +1,23 @@
 /* Sakura-inspired editorial layer: abstract motifs only, no official artwork. */
 :root{
-  --bg:#f2dce3;
-  --surface:#f8e7ec;
-  --surface-soft:#edcfd9;
-  --surface-raised:#fff3f6;
-  --text:#3d2d33;
-  --muted:#806871;
-  --accent:#d46b8b;
-  --accent-soft:#efabc0;
-  --sky:#efcbd7;
-  --sun:#f8dfb1;
-  --wine:#7e304c;
+  --bg:#fffaf5;
+  --surface:#fffefb;
+  --surface-soft:#fff6f7;
+  --surface-raised:#fffdfa;
+  --text:#352b2f;
+  --muted:#76676c;
+  --accent:#c85d7b;
+  --accent-soft:#ffb7c5;
+  --sky:#b8e4ff;
+  --sun:#fff3b0;
+  --wine:#762c43;
   --gold:#b18a4c;
-  --border:#dfc2cc;
-  --border-strong:#ceabb7;
+  --border:#e6d5d4;
+  --border-strong:#d2b5b5;
   --code:#2b2226;
-  --shadow-neumo:.75rem .75rem 1.65rem rgba(151,91,110,.17),-.72rem -.72rem 1.55rem rgba(255,255,255,.88);
-  --shadow-neumo-soft:.35rem .35rem .85rem rgba(151,91,110,.14),-.32rem -.32rem .75rem rgba(255,255,255,.76);
-  --shadow-neumo-inset:inset .25rem .25rem .55rem rgba(151,91,110,.15),inset -.25rem -.25rem .55rem rgba(255,255,255,.78);
+  --shadow-neumo:.75rem .75rem 1.65rem rgba(132,77,94,.13),-.72rem -.72rem 1.55rem rgba(255,255,255,.92);
+  --shadow-neumo-soft:.35rem .35rem .85rem rgba(132,77,94,.1),-.32rem -.32rem .75rem rgba(255,255,255,.84);
+  --shadow-neumo-inset:inset .25rem .25rem .55rem rgba(132,77,94,.12),inset -.25rem -.25rem .55rem rgba(255,255,255,.84);
   --shadow:var(--shadow-neumo-soft);
   font-family:"Noto Sans SC","Microsoft YaHei UI",system-ui,sans-serif;
 }
@@ -81,14 +81,14 @@
 
 body{
   background:
-    linear-gradient(90deg,transparent 0,transparent calc(50% - .5px),color-mix(in srgb,var(--wine) 5%,transparent) 50%,transparent calc(50% + .5px)),
+    linear-gradient(90deg,transparent 0,transparent calc(50% - .5px),color-mix(in srgb,var(--gold) 7%,transparent) 50%,transparent calc(50% + .5px)),
     var(--bg);
 }
 body::before{
   position:fixed;inset:0;z-index:-1;content:"";pointer-events:none;
   background:
-    radial-gradient(circle at 12% 12%,color-mix(in srgb,var(--accent-soft) 28%,transparent),transparent 24rem),
-    radial-gradient(circle at 88% 18%,color-mix(in srgb,var(--sun) 22%,transparent),transparent 22rem);
+    radial-gradient(circle at 12% 12%,color-mix(in srgb,var(--sky) 28%,transparent),transparent 24rem),
+    radial-gradient(circle at 88% 18%,color-mix(in srgb,var(--sun) 32%,transparent),transparent 22rem);
 }
 
 a{color:var(--wine)}
@@ -194,7 +194,7 @@ a{color:var(--wine)}
 .home-updates .card>p{margin-bottom:.65rem;color:var(--muted)}
 .home-updates .card>.tags{margin-bottom:0}
 
-.home-magic-hero{min-height:23rem;background:linear-gradient(135deg,var(--surface-raised) 38%,color-mix(in srgb,var(--accent-soft) 24%,var(--surface)),color-mix(in srgb,var(--sun) 12%,var(--surface)))}
+.home-magic-hero{min-height:23rem;background:linear-gradient(135deg,var(--surface) 45%,color-mix(in srgb,var(--accent-soft) 22%,var(--surface)),color-mix(in srgb,var(--sky) 20%,var(--surface)))}
 .home-magic-hero::before{
   position:absolute;right:8%;top:15%;width:3rem;aspect-ratio:1;background:var(--gold);opacity:.45;
   clip-path:polygon(50% 0,61% 38%,100% 50%,61% 62%,50% 100%,39% 62%,0 50%,39% 38%);content:"";
