@@ -121,8 +121,6 @@ Agent 在获得目标和权限后，可以规划多个步骤，主动调用工�
 
 如果不关注内部模块的细节，还可以把 Agent 简化为感知层、大脑层和执行层：
 
-![](file:///C:/Users/zhang/Documents/A%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0%E6%9C%AC/AI/Agent/AI%20Agent%20%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B.png)
-
 一次完整循环大致如下：
 
 1. 感知层收集用户需求、文件、网页和工具反馈；
