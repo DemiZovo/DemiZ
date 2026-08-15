@@ -367,13 +367,14 @@ body[data-section="blog"] .article-hero{background:linear-gradient(135deg,var(--
 .primary-nav a{position:relative;border:1px solid transparent;border-bottom-color:color-mix(in srgb,var(--gold) 55%,transparent);border-radius:.25rem .25rem .65rem .65rem;transform:translateZ(0)}
 .primary-nav a[aria-current="page"]{border-color:var(--gold);box-shadow:0 0 .8rem color-mix(in srgb,var(--gold) 28%,transparent),inset 0 -2px var(--gold)}
 
-.home-magic-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(15rem,.72fr);align-items:center;gap:clamp(1rem,4vw,4rem);min-height:34rem;overflow:visible;perspective:70rem}
-.hero-magic-copy{padding:clamp(.5rem,3vw,2rem);transform:translateZ(1rem)}
-.typed-slogan{max-width:15ch;font-size:clamp(2rem,5vw,4.7rem);line-height:1.08}
+.home-magic-hero{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(15rem,.72fr);align-items:center;gap:clamp(1.5rem,4vw,4rem);min-height:34rem;overflow:hidden;perspective:70rem}
+.hero-magic-copy{min-width:0;padding:clamp(.5rem,3vw,2rem);transform:translateZ(1rem)}
+.typed-slogan{display:grid;max-width:18ch;gap:.08em;font-size:clamp(2.25rem,5vw,4.5rem);line-height:1.02;text-wrap:balance}
+.slogan-line{display:block;max-width:100%;opacity:1}
+.slogan-line--hello{white-space:nowrap}
+.slogan-line--coding{font-size:.82em}
+.slogan-line--journey{max-width:12ch;font-size:.58em;line-height:1.35;letter-spacing:.03em}
 .typed-slogan code{color:var(--wine);font:inherit;white-space:nowrap}
-.typed-slogan>*{opacity:0;animation:type-reveal .8s steps(12,end) forwards}
-.typed-slogan code{animation-delay:.7s}.typed-slogan span:last-child{animation-delay:1.55s}
-@keyframes type-reveal{from{clip-path:inset(0 100% 0 0);opacity:1}to{clip-path:inset(0);opacity:1}}
 .magic-companion{position:relative;align-self:end;display:grid;place-items:center;min-height:29rem;isolation:isolate;transform-style:preserve-3d}
 .magic-companion::before{position:absolute;inset:12% 0 4%;z-index:-1;border:1px solid color-mix(in srgb,var(--gold) 52%,transparent);border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--accent-soft) 22%,transparent),transparent 68%);content:"";transform:translateZ(-2rem)}
 .companion-character{display:block;width:min(100%,25rem);padding:0;border:0;background:transparent;cursor:pointer;filter:drop-shadow(0 1.2rem 1rem rgba(91,46,61,.18));animation:companion-breathe 5.5s ease-in-out infinite}
@@ -403,9 +404,9 @@ body[data-section="blog"] .article-hero{background:linear-gradient(135deg,var(--
 :root[data-effects="off"] .magic-effects,:root[data-effects="off"] .sparkle-layer,:root[data-effects="off"] .magic-companion{display:none!important}
 body::before{transform:translateY(var(--magic-scroll,0))}
 
-@media(max-width:860px){.home-magic-hero{grid-template-columns:1fr minmax(12rem,.55fr)}.magic-companion{min-height:22rem}.typed-slogan{font-size:clamp(2rem,7vw,3.3rem)}}
-@media(max-width:620px){.home-magic-hero{grid-template-columns:1fr;overflow:hidden}.magic-companion{min-height:22rem}.companion-character{width:min(78vw,20rem)}.primary-nav ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(prefers-reduced-motion:reduce){.typed-slogan>*{clip-path:none;opacity:1;animation:none}.companion-character{animation:none}.magic-card-inner,.mini-magic-card{transition:none;transform:none}.magic-card:hover .magic-card-inner{transform:none}}
+@media(max-width:900px){.home-magic-hero{grid-template-columns:1fr;gap:0}.hero-magic-copy{padding-inline:clamp(.5rem,5vw,2.5rem)}.magic-companion{min-height:22rem}.typed-slogan{max-width:16ch;font-size:clamp(2.5rem,9vw,4.25rem)}.companion-character{width:min(62vw,21rem)}}
+@media(max-width:620px){.home-magic-hero{min-height:0}.hero-magic-copy{padding-inline:0}.typed-slogan{font-size:clamp(2.1rem,11vw,3.45rem)}.slogan-line--hello{white-space:normal}.magic-companion{min-height:20rem}.companion-character{width:min(78vw,20rem)}.primary-nav ul{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.companion-character{animation:none}.magic-card-inner,.mini-magic-card{transition:none;transform:none}.magic-card:hover .magic-card-inner{transform:none}}
 
 /* Scroll reveal: modules arrive like softly lifted pages with restrained Z depth. */
 .magic-motion-ready .magic-reveal{
