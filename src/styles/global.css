@@ -143,6 +143,8 @@ button,input,textarea,select{font:inherit}
   .site-header{grid-template-columns:1fr auto;align-items:center}
   .primary-nav{grid-column:1/-1;grid-row:2}
   .header-tools{grid-column:2;grid-row:1}
+  .more-menu{position:static}
+  .more-menu-list{top:calc(100% + .5rem);right:.65rem}
   .primary-nav ul{grid-template-columns:repeat(3,minmax(0,1fr))}
   .primary-nav a{min-height:3rem}
 }
