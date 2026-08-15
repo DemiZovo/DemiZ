@@ -1,20 +1,18 @@
 ---
-title: "从输入 URL 到页面显示，浏览器经历了什么？"
-description: "从 DNS、连接建立、HTTP 请求到浏览器渲染，拆解网页加载全过程，并用 DevTools 实际观察网络请求。"
-slug: "from-url-to-page-rendering"
+title: 从输入 URL 到页面显示，浏览器经历了什么？
+description: 从 DNS、连接建立、HTTP 请求到浏览器渲染，拆解网页加载全过程，并用 DevTools 实际观察网络请求。
+slug: from-url-to-page-rendering
 published: 2026-08-15
-category: "Web 基础"
-tags:
-  - "[浏览器"
-  - "HTTP"
-  - "DNS"
-  - "Web]"
+category: Web 基础
+tags: [浏览器, HTTP, DNS, Web]
 draft: false
 featured: false
-toc: true
+toc: false
 ---
 
-从浏览器地址栏输入一个网址并按下回车后到出现页面，这段时间虽然很短，浏览器却完成了域名解析、建立连接、发送请求、接收资源和渲染页面等一系列工作。理解这条链路，不仅能帮助我们入门 Web 开发，也能在网站加载缓慢时提供清晰的排查方向。
+从浏览器地址栏输入一个网址并按下回车后到页面出现，这段时间虽然很短，浏览器却完成了域名解析、建立连接、发送请求、接收资源和渲染页面等一系列工作。
+
+理解这条链路，不仅能帮助我们入门 Web 开发，也能在网站加载缓慢时提供清晰的排查方向。
 
 本文先从完整流程入手，再介绍 URL、DNS 和 HTTP 等基础概念，最后通过浏览器开发者工具观察一次真实请求。
 
@@ -36,15 +34,15 @@ toc: true
 URL 是资源在网络中的地址。例如：
 
 ```text
-https://example.com:443/articles/browser
+https://demizovo.github.io/DemiZ/blog/
 ```
 
 它可以拆成四个主要部分：
 
 - `https` 是协议，规定浏览器与服务器如何通信。
-- `example.com` 是域名，方便人类记忆。
+- `demizovo.github.io` 是域名，方便人类记忆,常见域名还有`xxxxxxx.com`。
 - `443` 是端口，用于确定服务器上的具体网络服务。
-- `/articles/browser` 是路径，表示要访问的资源位置。
+- `/DemiZ/blog/` 是路径，表示要访问的资源位置。
 
 HTTP 的默认端口是 `80`，HTTPS 的默认端口是 `443`。使用默认端口时，通常不需要在地址中明确写出端口号。
 
@@ -65,13 +63,13 @@ HTTP 的默认端口是 `80`，HTTPS 的默认端口是 `443`。使用默认端�
 可以使用 `nslookup` 查看基本的解析结果：
 
 ```bash
-nslookup example.com
+nslookup xxxxxxx.com
 ```
 
 如果系统安装了 `dig`，也可以查看更详细的 DNS 信息：
 
 ```bash
-dig example.com
+dig xxxxxx.com
 ```
 
 DNS 解析完成后，浏览器就获得了目标服务器的网络地址。
@@ -95,15 +93,15 @@ DNS 解析完成后，浏览器就获得了目标服务器的网络地址。
 连接建立后，浏览器会发送 HTTP 请求。一个经过简化的请求如下：
 
 ```http
-GET /articles/browser HTTP/1.1
-Host: example.com
+GET /DemiZ/blog HTTP/1.1
+Host: demizovo.github.io
 Accept: text/html
 ```
 
 其中：
 
 - `GET` 是请求方法，表示获取资源。
-- `/articles/browser` 是资源路径。
+- `/DemiZ/blog` 是资源路径。
 - `Host` 指定目标域名。
 - `Accept` 表示浏览器期望接收的内容类型。
 
@@ -179,7 +177,7 @@ JavaScript 也可能在此期间修改 DOM 和样式，触发新的布局或绘�
 
 DevTools 不会直接给出所有问题的答案，但它能帮助我们先确定时间主要消耗在哪个阶段。
 
-## 面试中如何回答
+## 面试
 
 “从输入 URL 到页面渲染，中间发生了什么？”是一道常见的前端基础题。回答时不必一开始就罗列所有细节，可以先给出主流程：
 
@@ -196,7 +194,7 @@ DevTools 不会直接给出所有问题的答案，但它能帮助我们先确�
 
 这样的回答先建立清晰框架，再根据问题逐层深入，比一次堆出大量术语更容易表达，也更便于面试官判断你是否真正理解。
 
-## 需要记住的主线
+## 总结
 
 从输入 URL 到看到页面，核心过程可以压缩为一句话：
 
