@@ -1,41 +1,17 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { entryPath, getPublicBlog, type BlogEntry } from '../../lib/content';
+// 旧分类名 → 新 slug 的迁移映射（v2 重构前的历史 URL）
+// @ts-nocheck —— 纯重定向桩：sitePath/target 仅在顶层 return 中使用，astro check 会误报 ts(6133)
+import { getBlogCategories, legacyCategoryAliases } from '../../lib/categories';
 import { sitePath } from '../../lib/urls';
 
 export async function getStaticPaths() {
-  const entries = await getPublicBlog();
-  const categories = [...new Set(entries.map(entry => entry.data.category))];
-
-  return categories.map(category => ({
-    params: { category },
-    props: {
-      category,
-      entries: entries.filter(entry => entry.data.category === category),
-    },
-  }));
+  const categories = await getBlogCategories();
+  const newSlugs = categories.map((category) => ({ params: { category: category.slug } }));
+  const legacySlugs = Object.keys(legacyCategoryAliases).map((legacy) => ({ params: { category: legacy } }));
+  return [...newSlugs, ...legacySlugs];
 }
 
-interface Props {
-  category: string;
-  entries: BlogEntry[];
-}
-
-const { category, entries } = Astro.props;
+const { category } = Astro.params;
+const target = legacyCategoryAliases[category as string] ?? category;
+return Astro.redirect(sitePath(`/blog/${target}/`), 301);
 ---
-<BaseLayout title={`分类：${category}`}>
-  <section class="hero">
-    <p class="eyebrow">Category</p>
-    <h1>分类：{category}</h1>
-    <p>共 {entries.length} 篇文章。</p>
-  </section>
-  <ul class="list-clean archive-list">
-    {entries.map(entry => (
-      <li>
-        <time datetime={entry.data.published.toISOString()}>{entry.data.published.toLocaleDateString('zh-CN')}</time>
-        <a href={sitePath(entryPath(entry))}>{entry.data.title}</a>
-        <span class="read-badge" data-read-marker={`blog:${entry.data.slug}`} hidden>✓ 已读</span>
-      </li>
-    ))}
-  </ul>
-</BaseLayout>

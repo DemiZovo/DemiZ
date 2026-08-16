@@ -15,6 +15,8 @@ const { entryKey, headings = [], showToc = true } = Astro.props;
 const tocHeadings = showToc ? headings.filter(({ depth }) => depth >= 2 && depth <= 4) : [];
 ---
 
+<div class="article-progress" aria-hidden="true" data-article-progress><span data-article-progress-bar></span></div>
+
 <aside class="reader-tools" data-reader-tools data-entry-key={entryKey} aria-label="阅读工具">
   <div class="reader-progress" aria-hidden="true"><span data-reader-progress></span></div>
 
@@ -75,6 +77,8 @@ const tocHeadings = showToc ? headings.filter(({ depth }) => depth >= 2 && depth
     const readLabel = tools.querySelector<HTMLElement>('[data-read-label]');
     const topButton = tools.querySelector<HTMLButtonElement>('[data-back-to-top]');
     const progress = tools.querySelector<HTMLElement>('[data-reader-progress]');
+    const topBar = document.querySelector<HTMLElement>('[data-article-progress-bar]');
+    const topProgress = document.querySelector<HTMLElement>('[data-article-progress]');
     const status = tools.querySelector<HTMLElement>('[data-reader-status]');
     const article = document.querySelector<HTMLElement>('[data-article-content]');
     if (!entryKey || !likeButton || !likeLabel || !readButton || !readLabel || !topButton || !progress || !status || !article) continue;
@@ -124,6 +128,11 @@ const tocHeadings = showToc ? headings.filter(({ depth }) => depth >= 2 && depth
       const ratio = Math.min(Math.max((window.scrollY - articleTop + 120) / available, 0), 1);
       progress.style.width = `${ratio * 100}%`;
       topButton.classList.toggle('is-visible', window.scrollY > 420);
+
+      if (topBar && topProgress) {
+        topBar.style.width = `${ratio * 100}%`;
+        topProgress.classList.toggle('is-visible', ratio > 0.005 && window.scrollY > 32);
+      }
 
       if (!automaticallyMarked && ratio >= .7) {
         automaticallyMarked = true;

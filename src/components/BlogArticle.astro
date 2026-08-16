@@ -1,0 +1,100 @@
+---
+import { render } from 'astro:content';
+import type { BlogEntry } from '../lib/content';
+import { categoryLabel } from '../lib/categories';
+import { readingMinutes } from '../lib/reading';
+import ArticleNavigation from './ArticleNavigation.astro';
+import ArticleReaderTools from './ArticleReaderTools.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { sitePath } from '../lib/urls';
+
+interface Props {
+  entry: BlogEntry;
+  previous: BlogEntry | null;
+  next: BlogEntry | null;
+}
+
+const { entry, previous, next } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const date = entry.data.published.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const updated = entry.data.updated
+  ? entry.data.updated.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  : null;
+const minutes = readingMinutes(entry.body ?? '');
+
+const statusLabels: Record<string, string> = {
+  seed: 'Seed · 刚种下',
+  growing: 'Growing · 成长中',
+  evergreen: 'Evergreen · 常青',
+};
+const statusLabel = statusLabels[entry.data.status] ?? statusLabels.growing;
+
+// 收尾语：DemiZ 自己说的话，按 slug 稳定取一条（不随机跳，保持 SSR 一致）。
+const endings = [
+  '这篇笔记暂时写到这里。如果以后理解改变，我还会回来修改它。',
+  '先记到这里，等踩到坑或者想得更清楚，再回来补。',
+  '写这篇时的理解是这样，以后可能会变。',
+  '这篇还没有真正写完，但先收进魔法库，日后继续。',
+];
+const ending = endings[[...entry.data.slug].reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % endings.length];
+---
+
+<BaseLayout title={`${entry.data.title} | DemiZ`} description={entry.data.description} image={entry.data.cover} type="article" publishedTime={entry.data.published} updatedTime={entry.data.updated} tags={entry.data.tags}>
+  <div class="article-layout">
+    <article class="article" data-article-content>
+      <p class="article-back"><a href={sitePath('/blog/')}>← 魔法笔记</a></p>
+      <header class="article-header">
+        <p class="article-header__category"><a href={sitePath(`/blog/${entry.data.category}/`)}>{categoryLabel(entry.data.category)}</a></p>
+        <h1>{entry.data.title}</h1>
+        <p class="article-header__desc">{entry.data.description}</p>
+        <p class="article-header__meta">
+          <time datetime={entry.data.published.toISOString()}>{date}</time>
+          <span aria-hidden="true">·</span>
+          <span>{minutes} min</span>
+          {updated && (<><span aria-hidden="true">·</span><span>Updated {updated}</span></>)}
+        </p>
+        {entry.data.status && <p class="article-header__status">{statusLabel}</p>}
+        {entry.data.tags.length > 0 && (
+          <ul class="article-header__tags">
+            {entry.data.tags.map(tag => <li><a href={sitePath(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a></li>)}
+          </ul>
+        )}
+      </header>
+      <Content />
+      <footer class="article-ending" aria-label="文章结尾">
+        <p class="article-ending__mark" aria-hidden="true">✦</p>
+        <p class="article-ending__title">收录完成</p>
+        <p class="article-ending__note">{ending}</p>
+      </footer>
+      <ArticleNavigation
+        previous={previous ? { title: previous.data.title, path: `/blog/${previous.data.slug}/` } : undefined}
+        next={next ? { title: next.data.title, path: `/blog/${next.data.slug}/` } : undefined}
+        indexPath="/blog/"
+        indexLabel="返回魔法笔记"
+      />
+    </article>
+    <ArticleReaderTools entryKey={`blog:${entry.data.slug}`} headings={headings} showToc={entry.data.toc} />
+  </div>
+</BaseLayout>
+
+<style>
+  .article-back{margin:0 0 1.5rem}
+  .article-back a{color:var(--muted);text-decoration:none;font-size:.9rem}
+  .article-back a:hover{color:var(--accent)}
+  .article-header{margin-bottom:2.5rem}
+  .article-header__category{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin:0 0 .75rem}
+  .article-header__category a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+  .article-header__category a:hover{border-bottom-color:var(--accent)}
+  .article-header__desc{color:var(--muted);font-size:1.15rem;line-height:1.6;margin:1rem 0}
+  .article-header__meta{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums;margin:1.25rem 0 .25rem}
+  .article-header__status{color:var(--muted);font-size:.82rem;margin:.25rem 0 0}
+  .article-header__tags{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;padding:0;margin:1rem 0 0}
+  .article-header__tags a{color:var(--muted);font-size:.88rem;text-decoration:none;border-bottom:1px solid var(--border-strong)}
+  .article-header__tags a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+
+  .article-ending{margin-top:4rem;padding-top:2.5rem;border-top:1px solid var(--border);text-align:center}
+  .article-ending__mark{color:var(--gold);font-size:1.5rem;margin:0}
+  .article-ending__title{font-family:var(--font-serif);font-size:1.1rem;letter-spacing:.08em;color:var(--text);margin:.5rem 0 .75rem}
+  .article-ending__note{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:26rem;margin:0 auto}
+</style>

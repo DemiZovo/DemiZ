@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { entryPath, getPublicContent } from '../lib/content';
+import { categoryLabel } from '../lib/categories';
 import { sitePath } from '../lib/urls';
 
 export const GET: APIRoute = async () => {
@@ -7,7 +8,7 @@ export const GET: APIRoute = async () => {
   return new Response(JSON.stringify(entries.map(entry => ({
     title: entry.data.title,
     description: entry.data.description,
-    category: entry.collection === 'blog' ? entry.data.category : '生活',
+    category: entry.collection === 'blog' ? categoryLabel(entry.data.category) : '生活',
     tags: entry.data.tags,
     collection: entry.collection,
     published: entry.data.published.toISOString(),

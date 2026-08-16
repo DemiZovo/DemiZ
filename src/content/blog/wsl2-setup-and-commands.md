@@ -3,7 +3,7 @@ title: WSL2 安装、常用命令与资源限制
 description: 整理 WSL2 的安装方式、常用管理命令、Windows 文件访问和 .wslconfig 资源限制配置。
 slug: wsl2-setup-and-commands
 published: 2026-08-14
-category: 开发环境
+category: dev
 tags: [WSL2, Windows, Linux, Docker]
 draft: false
 featured: false

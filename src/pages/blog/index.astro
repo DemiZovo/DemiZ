@@ -1,32 +1,68 @@
 ---
+import ArticleRow from '../../components/ArticleRow.astro';
+import CategoryCard from '../../components/CategoryCard.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { entryPath, getPublicBlog } from '../../lib/content';
+import { getBlogCategories } from '../../lib/categories';
+import { getPublicBlog } from '../../lib/content';
 import { sitePath } from '../../lib/urls';
 
-// getPublicBlog() is the canonical newest-first ordering shared with article navigation.
-const posts = await getPublicBlog();
+const categories = await getBlogCategories();
+const latest = (await getPublicBlog()).slice(0, 6);
 ---
-<BaseLayout title="魔法笔记">
-  <section class="hero"><p class="eyebrow">Coding Grimoire</p><h1>魔法笔记</h1><p>把学到的技术、解决的 bug 和工程取舍，收进一张张知识卡牌。</p></section>
-  <div class="grid magic-note-grid">
-    {posts.map(post => (
-      <article class="article-card magic-card">
-        <div class="magic-card-inner">
-          <div class="magic-card-face magic-card-front">
-            <span class="card-sigil" aria-hidden="true">✦</span>
-            <p class="meta"><time datetime={post.data.published.toISOString()}>{post.data.published.toLocaleDateString('zh-CN')}</time></p>
-            <h2>{post.data.title}</h2>
-            <p class="card-element">{post.data.category}</p>
-          </div>
-          <div class="magic-card-face magic-card-back">
-            <p class="eyebrow">Card Note</p>
-            <p>{post.data.description}</p>
-            <ul class="tags">{post.data.tags.slice(0, 3).map(tag => <li><span class="tag">{tag}</span></li>)}</ul>
-            <a class="card-open" href={sitePath(entryPath(post))}>翻开笔记 <span aria-hidden="true">→</span></a>
-            <span class="read-badge" data-read-marker={`blog:${post.data.slug}`} hidden>✓ 已读</span>
-          </div>
-        </div>
-      </article>
-    ))}
-  </div>
+<BaseLayout title="Blog | DemiZ" description="DemiZ 的技术博客：AI Infra、Web、工程实践与开发环境的学习记录。">
+  <section class="page-head">
+    <p class="eyebrow">Coding Grimoire</p>
+    <h1 class="page-head__title">魔法笔记</h1>
+    <p class="page-head__desc">把学到的技术、踩过的坑和工程取舍，收进一张张知识卡牌。</p>
+    <p class="page-head__search"><a href={sitePath('/search/')}>搜索笔记 →</a> · <a href={sitePath('/archives/')}>查看 Archive →</a></p>
+  </section>
+
+  <section class="blog-categories" aria-labelledby="explore">
+    <h2 id="explore" class="section-title">探索领域</h2>
+    <div class="category-grid">
+      {categories.map(category => <CategoryCard {...category} />)}
+    </div>
+  </section>
+
+  <section class="blog-latest" aria-labelledby="latest">
+    <div class="blog-latest__head">
+      <h2 id="latest" class="section-title">最近记录</h2>
+      <a class="blog-latest__more" href={sitePath('/archives/')}>View Archive →</a>
+    </div>
+    <div class="article-list">
+      {latest.map(entry => <ArticleRow entry={entry} showCategory />)}
+    </div>
+  </section>
 </BaseLayout>
+
+<style>
+  .page-head{max-width:var(--container-main);margin-inline:auto;padding:clamp(var(--space-6),6vw,var(--space-9)) 0 var(--space-7)}
+  .page-head__title{font-size:clamp(2.5rem,7vw,3.5rem);font-weight:650;letter-spacing:-.035em;line-height:1.08;margin:.2rem 0}
+  .page-head__desc{max-width:36rem;color:var(--muted);font-size:1.05rem}
+  .page-head__search{margin-top:var(--space-4)}
+  .page-head__search a{color:var(--wine);text-decoration:none}
+  .page-head__search a:hover{text-decoration:underline}
+
+  .section-title{font-size:.82rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+
+  .blog-categories,.blog-latest{max-width:var(--container-main);margin-inline:auto;margin-top:var(--space-8)}
+  .category-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--space-6);margin-top:var(--space-5);perspective:90rem}
+
+  .blog-latest__head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--space-4);margin-bottom:var(--space-3)}
+  .blog-latest__head .section-title{margin:0}
+  .blog-latest__more{color:var(--muted);font-size:.9rem;text-decoration:none}
+  .blog-latest__more:hover{color:var(--wine)}
+  .article-list{margin-top:var(--space-3)}
+
+  @media(max-width:1080px){
+    .category-grid{grid-template-columns:repeat(4,minmax(11rem,1fr));gap:var(--space-4)}
+  }
+  @media(max-width:900px){
+    .category-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  }
+  @media(max-width:520px){
+    .page-head__title{font-size:2.2rem}
+    .category-grid{display:flex;gap:var(--space-3);overflow-x:auto;scroll-snap-type:x proximity;padding-bottom:var(--space-3);-webkit-overflow-scrolling:touch}
+    .category-grid :global(.category-card){flex:0 0 min(13.5rem,74vw);scroll-snap-align:start}
+  }
+</style>

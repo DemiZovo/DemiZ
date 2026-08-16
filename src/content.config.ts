@@ -9,6 +9,8 @@ const slug = z.string().regex(slugPattern, '必须是英文小写短链接，单
 const image = z.string().regex(imagePattern, '必须是受支持的图片路径');
 const tags = z.array(z.string().trim().min(1)).default([]);
 const optionalUpdated = z.coerce.date().optional();
+// 笔记成熟度：seed（刚开始整理）/ growing（仍在补充）/ evergreen（相对稳定）。
+const noteStatus = z.enum(['seed', 'growing', 'evergreen']).default('growing');
 
 const blog = defineCollection({
   loader: glob({ pattern: '**/*.{md,mdx}', base: './src/content/blog' }),
@@ -24,6 +26,7 @@ const blog = defineCollection({
     draft: z.boolean().default(false),
     featured: z.boolean().default(false),
     toc: z.boolean().default(true),
+    status: noteStatus,
   }).refine(({ published, updated }) => !updated || updated >= published, {
     message: 'updated 不得早于 published',
     path: ['updated'],

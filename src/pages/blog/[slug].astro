@@ -1,35 +1,44 @@
 ---
-import { render } from 'astro:content';
-import ArticleNavigation from '../../components/ArticleNavigation.astro';
-import ArticleReaderTools from '../../components/ArticleReaderTools.astro';
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getPublicBlog } from '../../lib/content';
-import { sitePath } from '../../lib/urls';
+import BlogArticle from '../../components/BlogArticle.astro';
+import BlogCategory from '../../components/BlogCategory.astro';
+import { getPublicBlog, type BlogEntry } from '../../lib/content';
+import { getBlogCategories, type CategoryWithCount } from '../../lib/categories';
 
 export async function getStaticPaths() {
   const entries = await getPublicBlog();
-  return entries.map((entry, index) => ({
+  const categories = await getBlogCategories();
+
+  const articlePaths = entries.map((entry, index) => ({
     params: { slug: entry.data.slug },
-    props: { entry, previous: entries[index - 1], next: entries[index + 1] },
+    props: {
+      kind: 'article' as const,
+      entry,
+      previous: entries[index - 1] ?? null,
+      next: entries[index + 1] ?? null,
+    },
   }));
+
+  const categoryPaths = categories.map((category) => ({
+    params: { slug: category.slug },
+    props: { kind: 'category' as const, category },
+  }));
+
+  return [...articlePaths, ...categoryPaths];
 }
 
-const { entry, previous, next } = Astro.props;
-const { Content, headings } = await render(entry);
+interface Props {
+  kind: 'article' | 'category';
+  entry?: BlogEntry;
+  previous?: BlogEntry | null;
+  next?: BlogEntry | null;
+  category?: CategoryWithCount;
+}
+
+const { kind, entry, previous, next, category } = Astro.props;
 ---
-<BaseLayout title={`${entry.data.title} | 魔法笔记`} description={entry.data.description} image={entry.data.cover} type="article" publishedTime={entry.data.published} updatedTime={entry.data.updated} tags={entry.data.tags}>
-  <div class="article-layout">
-    <article class="article" data-article-content>
-      <p><a href={sitePath('/blog/')}>← 返回魔法笔记</a></p>
-      <header class="article-hero article-hero--blog"><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')} · <a href={sitePath(`/categories/${encodeURIComponent(entry.data.category)}/`)}>{entry.data.category}</a></p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
-      <Content />
-      <ArticleNavigation
-        previous={previous && { title: previous.data.title, path: `/blog/${previous.data.slug}/` }}
-        next={next && { title: next.data.title, path: `/blog/${next.data.slug}/` }}
-        indexPath="/blog/"
-        indexLabel="返回魔法笔记"
-      />
-    </article>
-    <ArticleReaderTools entryKey={`blog:${entry.data.slug}`} headings={headings} showToc={entry.data.toc} />
-  </div>
-</BaseLayout>
+
+{kind === 'article' && entry
+  ? <BlogArticle entry={entry} previous={previous ?? null} next={next ?? null} />
+  : category
+    ? <BlogCategory category={category} />
+    : null}

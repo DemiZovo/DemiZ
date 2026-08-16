@@ -3,7 +3,7 @@ title: "AI Infra：系统设计中的变与不变"
 description: "梳理 AI Infra 的硬件约束、软件栈，以及大模型训练与推理中的存储、通信、延迟和吞吐问题。"
 slug: "ai-infra-system-design-notes"
 published: 2026-08-15
-category: "AI Infra"
+category: "ai-infra"
 tags: [AI Infra, PyTorch, GPU, LLM, 系统设计]
 draft: false
 featured: false

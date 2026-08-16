@@ -1,12 +1,13 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { entryPath, getPublicContent } from '../lib/content';
+import { categoryLabel } from '../lib/categories';
 import { sitePath } from '../lib/urls';
 
 const entries = await getPublicContent();
 const groups = Map.groupBy(entries, entry => String(entry.data.published.getFullYear()));
 ---
-<BaseLayout title="库洛牌全书">
+<BaseLayout title="Archive | DemiZ" description="DemiZ 的全部公开记录，按年份归档。">
   <section class="hero"><p class="eyebrow">The Card Book</p><h1>库洛牌全书</h1><p>所有公开记录按时间排列，重新翻开曾经收集的知识与日常。</p></section>
   <div class="archive-book">
   {[...groups].map(([year, items]) => (
@@ -18,7 +19,7 @@ const groups = Map.groupBy(entries, entry => String(entry.data.published.getFull
             <time datetime={item.data.published.toISOString()}>{item.data.published.toLocaleDateString('zh-CN')}</time>
             <a href={sitePath(entryPath(item))}>{item.data.title}</a>
             {item.collection === 'blog' && (
-              <a class="tag" href={sitePath(`/categories/${encodeURIComponent(item.data.category)}/`)}>{item.data.category}</a>
+              <a class="tag" href={sitePath(`/blog/${item.data.category}/`)}>{categoryLabel(item.data.category)}</a>
             )}
             <span class="read-badge" data-read-marker={`${item.collection}:${item.data.slug}`} hidden>✓ 已读</span>
           </li>

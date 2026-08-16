@@ -1,0 +1,64 @@
+---
+import type { BlogEntry } from '../lib/categories';
+import { entryPath } from '../lib/content';
+import { categoryLabel } from '../lib/categories';
+import { sitePath } from '../lib/urls';
+
+interface Props {
+  entry: BlogEntry;
+  showCategory?: boolean;
+}
+
+const { entry, showCategory = false } = Astro.props;
+const { published, title, description, category, tags } = entry.data;
+const date = published.toLocaleDateString('zh-CN');
+---
+
+<article class="article-row">
+  <time class="article-row__date" datetime={published.toISOString()}>{date}</time>
+  <div class="article-row__body">
+    <h2 class="article-row__title"><a href={sitePath(entryPath(entry))}>{title}</a></h2>
+    {description && <p class="article-row__desc">{description}</p>}
+    <p class="article-row__meta">
+      {showCategory && category && <a class="article-row__category" href={sitePath(`/blog/${category}/`)}>{categoryLabel(category)}</a>}
+      {tags.length > 0 && (
+        <span class="article-row__tags">{tags.slice(0, 3).map(tag => <a href={sitePath(`/tags/${encodeURIComponent(tag)}/`)}>{tag}</a>)}</span>
+      )}
+    </p>
+  </div>
+  <span class="article-row__arrow" aria-hidden="true">↗</span>
+</article>
+
+<style>
+  .article-row{
+    display:grid;
+    grid-template-columns:6.5rem minmax(0,1fr) auto;
+    align-items:start;
+    gap:var(--space-5);
+    padding:var(--space-5) var(--space-2);
+    border-bottom:1px solid var(--border);
+    transition:background-color var(--duration-normal) ease;
+  }
+  .article-row:hover{background:color-mix(in srgb,var(--accent) 2.5%,transparent)}
+  .article-row__date{color:var(--muted);font-size:.88rem;font-variant-numeric:tabular-nums;padding-top:.2rem}
+  .article-row__title{margin:0;font-family:var(--font-serif);font-size:1.3rem;line-height:1.35}
+  .article-row__title a{color:var(--text);text-decoration:none;transition:transform var(--duration-normal) ease,color var(--duration-normal) ease;display:inline-block}
+  .article-row:hover .article-row__title a{color:var(--wine);transform:translateX(4px)}
+  .article-row__desc{margin:.3rem 0 .5rem;color:var(--muted);line-height:1.65}
+  .article-row__meta{display:flex;flex-wrap:wrap;align-items:center;gap:var(--space-2);margin:0}
+  .article-row__category{color:var(--wine);font-size:.82rem;text-decoration:none}
+  .article-row__tags{display:inline-flex;flex-wrap:wrap;gap:.35rem}
+  .article-row__tags a{color:var(--muted);font-size:.82rem;text-decoration:none;border-bottom:1px solid var(--border-strong)}
+  .article-row__tags a:hover{color:var(--wine);border-bottom-color:var(--wine)}
+  .article-row__arrow{color:var(--muted);opacity:0;transform:translateX(-4px);transition:opacity var(--duration-normal) ease,transform var(--duration-normal) ease,color var(--duration-normal) ease}
+  .article-row:hover .article-row__arrow{opacity:1;transform:translateX(0);color:var(--wine)}
+
+  @media(max-width:620px){
+    .article-row{grid-template-columns:1fr;gap:var(--space-2)}
+    .article-row__arrow{display:none}
+    .article-row__date{padding-top:0}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .article-row__title a,.article-row__arrow{transition:none;transform:none!important}
+  }
+</style>

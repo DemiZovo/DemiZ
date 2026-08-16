@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { sitePath } from '../../lib/urls';
+
+// 写作台并入 Workshop：DEV 下可直接用，生产环境由 PUBLIC_WRITER_URL 指向部署实例。
+const writerUrl = import.meta.env.PUBLIC_WRITER_URL || (import.meta.env.DEV ? sitePath('/write/') : '');
+
+const projects = [
+  {
+    name: 'DemiZ Writer',
+    status: 'Released',
+    description: '一个为了自己写 Markdown 做出来的小型写作环境，文章和图片一起提交，构建通过后自动发布。',
+    stack: ['Astro', 'TypeScript', 'Cloudflare Workers'],
+    href: writerUrl,
+  },
+];
+---
+<BaseLayout title="Workshop | DemiZ" description="DemiZ 的工作台：一些因为自己想用，所以顺手做出来的东西。">
+  <section class="page-head">
+    <p class="eyebrow">Workshop</p>
+    <h1 class="page-head__title">工作台</h1>
+    <p class="page-head__desc">一些因为自己想用，所以顺手做出来的东西。不是简历项目页，是我的实验室。</p>
+  </section>
+
+  <section class="workshop-list" aria-label="项目列表">
+    {projects.map(project => (
+      <article class="project-row">
+        <div class="project-row__main">
+          <p class="project-row__status">{project.status}</p>
+          <h2 class="project-row__name">{project.name}</h2>
+          <p class="project-row__desc">{project.description}</p>
+          <p class="project-row__stack">{project.stack.join(' · ')}</p>
+        </div>
+        <div class="project-row__actions">
+          {project.href ? <a href={project.href}>Open ↗</a> : <span class="project-row__soon">Coming soon</span>}
+        </div>
+      </article>
+    ))}
+  </section>
+</BaseLayout>
+
+<style>
+  .page-head{max-width:var(--container-main);margin-inline:auto;padding:clamp(var(--space-6),6vw,var(--space-9)) 0 var(--space-7)}
+  .page-head__title{font-size:clamp(2.5rem,7vw,3.5rem);font-weight:650;letter-spacing:-.035em;line-height:1.08;margin:.2rem 0}
+  .page-head__desc{max-width:34rem;color:var(--muted);font-size:1.05rem;line-height:1.7}
+
+  .workshop-list{max-width:var(--container-main);margin-inline:auto;display:grid;gap:var(--space-5)}
+  .project-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:var(--space-6);padding:var(--space-6) var(--space-2);border-bottom:1px solid var(--border)}
+  .project-row__status{color:var(--wine);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin:0}
+  .project-row__name{margin:.3rem 0;font-family:var(--font-serif);font-size:1.5rem}
+  .project-row__desc{margin:.2rem 0 .6rem;color:var(--muted);max-width:38rem;line-height:1.7}
+  .project-row__stack{color:var(--muted);font-size:.85rem;margin:0}
+  .project-row__actions a{color:var(--wine);text-decoration:none;font-weight:600}
+  .project-row__actions a:hover{text-decoration:underline}
+  .project-row__soon{color:var(--muted);font-size:.9rem}
+
+  @media(max-width:620px){
+    .project-row{grid-template-columns:1fr;gap:var(--space-3)}
+  }
+</style>

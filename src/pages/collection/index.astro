@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+---
+<BaseLayout title="Collection | DemiZ" description="DemiZ 的宝物柜：我收藏和喜欢的东西。">
+  <section class="page-head">
+    <p class="eyebrow">Collection</p>
+    <h1 class="page-head__title">宝物柜</h1>
+    <p class="page-head__desc">我收藏和喜欢的东西：软件、书、动画、网站、设备。与「我做的」工作台分开。</p>
+  </section>
+  <p class="empty collection-empty">宝物柜正在整理中。<br />喜欢的东西，值得认真收藏。</p>
+</BaseLayout>
+
+<style>
+  .page-head{max-width:var(--container-narrow);margin-inline:auto;padding:clamp(var(--space-6),6vw,var(--space-9)) 0 var(--space-7)}
+  .page-head__title{font-size:clamp(2.5rem,7vw,3.5rem);font-weight:650;letter-spacing:-.035em;line-height:1.08;margin:.2rem 0}
+  .page-head__desc{max-width:32rem;color:var(--muted);font-size:1.05rem;line-height:1.7}
+  .collection-empty{max-width:var(--container-narrow);margin:0 auto;padding:var(--space-8);text-align:center;color:var(--muted);border:1px dashed var(--border);border-radius:var(--radius-md)}
+</style>

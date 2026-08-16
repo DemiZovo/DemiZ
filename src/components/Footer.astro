@@ -1,8 +1,29 @@
 ---
 import { siteConfig } from '../config/site';
 import { sitePath } from '../lib/urls';
+
+const exploreLinks = [
+  { href: '/archives/', label: 'Archive', external: false },
+  { href: '/tags/', label: 'Tags', external: false },
+  { href: '/rss.xml', label: 'RSS', external: false },
+  { href: '/privacy/', label: '隐私说明', external: false },
+  { href: siteConfig.author.github, label: 'GitHub', external: true },
+];
+
+// 随机微文案：活人感靠真实的话，而不是装饰。
+const footnotes = [
+  '魔法通常先从报错开始。',
+  '今天也有好好写 bug。',
+  '先把坑少开一点，再把坑填好一点。',
+  '很多文章最初只是写给未来的自己。',
+  '克制，也是一种魔法。',
+];
+const pick = footnotes[Math.floor(Math.random() * footnotes.length)];
 ---
 <footer class="site-footer">
+  <nav aria-label="页脚导航">
+    {exploreLinks.map(({ href, label, external }) => <a href={external ? href : sitePath(href)} {...(external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{label}</a>)}
+  </nav>
   <p>© {new Date().getFullYear()} {siteConfig.author.name}</p>
-  <nav aria-label="页脚导航"><a href={sitePath('/privacy/')}>隐私说明</a><a href={sitePath('/rss.xml')}>RSS</a></nav>
+  <p class="site-footer__note">{pick}</p>
 </footer>

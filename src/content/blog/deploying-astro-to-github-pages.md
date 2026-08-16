@@ -3,7 +3,7 @@ title: 将 Astro 网站部署到 GitHub Pages
 description: 记录项目站点的路径配置、自动构建和发布前验证要点。
 slug: deploying-astro-to-github-pages
 published: 2026-08-11
-category: 部署
+category: engineering
 tags: [Astro, GitHub Pages, CI]
 draft: false
 featured: false

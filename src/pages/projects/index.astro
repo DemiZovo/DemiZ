@@ -1,14 +1,7 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getProjects } from '../../lib/projects';
-const projects = await getProjects();
+// 宝物柜已改名为 Collection，旧 /projects/ 重定向
+// @ts-nocheck —— 纯重定向桩：sitePath 仅在顶层 return 中使用，astro check 会误报 ts(6133)
+import { sitePath } from '../../lib/urls';
+
+return Astro.redirect(sitePath('/collection/'), 301);
 ---
-<BaseLayout title="我的宝物柜">
-  <section class="hero"><p class="eyebrow">Treasure Cabinet</p><h1>我的宝物柜</h1><p>这里收藏我完成的小魔法：值得单独介绍的代码项目。</p></section>
-  {projects.length > 0 ? <div class="grid treasure-grid">{projects.map(project => <article class="card treasure-item">
-    <h2>{project.name}</h2><p>{project.description}</p>
-    <ul class="tags">{project.tags.map(tag => <li><span class="tag">{tag}</span></li>)}</ul>
-    <p><a href={project.github?.url ?? `https://github.com/${project.repo}`}>查看 GitHub</a>{project.homepage && <> · <a href={project.homepage}>项目网站</a></>}</p>
-    <p class="meta">{project.github ? `${project.github.stars} stars · ${project.github.language ?? '多语言'}` : 'GitHub 数据暂不可用'}</p>
-  </article>)}</div> : <p class="empty treasure-empty">宝物柜正在整理中。你仍可以先访问 <a href="https://github.com/DemiZovo">DemiZ 的 GitHub 主页</a>寻找代码魔法。</p>}
-</BaseLayout>

@@ -1,26 +1,5 @@
-/* Sakura-inspired editorial layer: abstract motifs only, no official artwork. */
-html:root{
-  --bg:#fffaf5;
-  --surface:#fffefb;
-  --surface-soft:#fff6f7;
-  --surface-raised:#fffefb;
-  --text:#352b2f;
-  --muted:#76676c;
-  --accent:#c85d7b;
-  --accent-soft:#ffb7c5;
-  --sky:#b8e4ff;
-  --sun:#fff3b0;
-  --wine:#762c43;
-  --gold:#b18a4c;
-  --border:#e6d5d4;
-  --border-strong:#d2b5b5;
-  --code:#2b2226;
-  --shadow-neumo:.75rem .75rem 1.65rem rgba(92,50,60,.15),-.72rem -.72rem 1.55rem rgba(255,255,255,.92);
-  --shadow-neumo-soft:.35rem .35rem .85rem rgba(92,50,60,.1),-.32rem -.32rem .75rem rgba(255,255,255,.84);
-  --shadow-neumo-inset:inset .25rem .25rem .55rem rgba(92,50,60,.12),inset -.25rem -.25rem .55rem rgba(255,255,255,.84);
-  --shadow:var(--shadow-neumo-soft);
-  font-family:"Noto Sans SC","Microsoft YaHei UI",system-ui,sans-serif;
-}
+/* Sakura-inspired editorial layer: abstract motifs only, no official artwork.
+   颜色 / 阴影等变量已在 tokens.css 定义，这里只保留主题化的视觉表达。 */
 
 /* Lightweight magical atmosphere. Effects can be disabled globally. */
 .magic-effects,.sparkle-layer{position:fixed;inset:0;z-index:30;overflow:hidden;pointer-events:none}
@@ -58,26 +37,6 @@ html:root{
   background:color-mix(in srgb,var(--surface) 94%,transparent);box-shadow:var(--shadow);color:var(--wine);font-size:.8rem;cursor:pointer;
 }
 .effects-toggle:hover{border-color:var(--accent);background:var(--surface-soft)}
-
-html:root[data-theme="dark"]{
-  --bg:#211a1d;
-  --surface:#2b2226;
-  --surface-soft:#32262b;
-  --surface-raised:#2b2226;
-  --text:#f7eceb;
-  --muted:#cbb7bb;
-  --accent:#f0a2b5;
-  --accent-soft:#cf718a;
-  --wine:#f0a2b5;
-  --gold:#d6b77d;
-  --border:#4d393f;
-  --border-strong:#72505a;
-  --code:#171215;
-  --shadow-neumo:.75rem .75rem 1.65rem rgba(0,0,0,.32),-.65rem -.65rem 1.35rem rgba(77,57,63,.52);
-  --shadow-neumo-soft:.35rem .35rem .85rem rgba(0,0,0,.28),-.3rem -.3rem .72rem rgba(77,57,63,.42);
-  --shadow-neumo-inset:inset .25rem .25rem .55rem rgba(0,0,0,.3),inset -.22rem -.22rem .5rem rgba(77,57,63,.4);
-  --shadow:var(--shadow-neumo-soft);
-}
 
 body{
   background:
@@ -303,9 +262,18 @@ body[data-section="blog"] .article-hero{background:linear-gradient(135deg,var(--
 
 .site-footer{
   position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:.4rem;
   margin-top:2.5rem;
+  padding-top:1.75rem;
   border-top:1px solid var(--border-strong);
+  text-align:center;
 }
+.site-footer nav{display:flex;flex-wrap:wrap;justify-content:center;gap:1rem}
+.site-footer p{margin:0}
+.site-footer__note{color:var(--muted);font-style:italic;opacity:.9}
 .site-footer::before{
   position:absolute;
   top:-.36rem;

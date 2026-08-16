@@ -3,8 +3,8 @@ title: Astro Content Collections 学习笔记
 description: 使用 Schema 管理 Markdown 元数据，并为公开内容建立统一边界。
 slug: astro-content-collections-notes
 published: 2026-08-12
-category: Astro
-tags: [Astro, TypeScript, Markdown]
+category: web
+tags: [Astro, TypeScript, Markdown, Web]
 draft: false
 featured: false
 toc: true

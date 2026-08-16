@@ -1,4 +1,5 @@
 ---
+import '../styles/tokens.css';
 import '../styles/global.css';
 import '../styles/sakura-theme.css';
 ---
@@ -64,7 +65,7 @@ import '../styles/sakura-theme.css';
           <legend>元信息</legend>
           <label><span>摘要</span><textarea name="description" required maxlength="240" rows="3" placeholder="为这篇文章写一段简短摘要"></textarea></label>
           <label><span>标签</span><input name="tags" placeholder="Astro, TypeScript" /></label>
-          <label data-blog-field><span>分类</span><input name="category" value="未分类" /></label>
+          <label data-blog-field><span>分类</span><input name="category" value="web" list="category-options" placeholder="ai-infra / web / engineering / dev" /><datalist id="category-options"><option value="ai-infra"></option><option value="web"></option><option value="engineering"></option><option value="dev"></option></datalist></label>
           <label><span>发布日期</span><input name="published" type="date" required /></label>
           <label><span>更新日期（可选）</span><input name="updated" type="date" /></label>
           <label class="writer-check"><input name="featured" type="checkbox" /> 设为精选</label>

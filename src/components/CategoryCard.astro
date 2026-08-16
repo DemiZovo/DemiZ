@@ -1,0 +1,70 @@
+---
+import { sitePath } from '../lib/urls';
+
+interface Props {
+  slug: string;
+  name: string;
+  zh: string;
+  card: string;
+  count: number;
+}
+
+const { slug, name, zh, card, count } = Astro.props;
+---
+<a class="category-card" href={sitePath(`/blog/${slug}/`)} aria-label={`${name} · ${zh}，共 ${count} 篇`}>
+  <span class="category-card__shine" aria-hidden="true"></span>
+  <span class="category-card__sigil" aria-hidden="true">✦</span>
+  <span class="category-card__card">{card}</span>
+  <span class="category-card__name">{name}</span>
+  <span class="category-card__zh">{zh}</span>
+  <span class="category-card__count">{count} note{count === 1 ? '' : 's'}</span>
+</a>
+
+<style>
+  .category-card{
+    --tilt: 8deg;
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    aspect-ratio:.62;
+    width:100%;
+    padding:var(--space-6) var(--space-4);
+    border:1px solid var(--gold);
+    border-radius:var(--radius-md);
+    background:linear-gradient(150deg,var(--surface),var(--surface-soft));
+    box-shadow:.35rem .45rem 0 color-mix(in srgb,var(--wine) 16%,transparent),0 1rem 2rem rgba(75,37,50,.12);
+    color:var(--text);
+    text-decoration:none;
+    text-align:center;
+    transform-style:preserve-3d;
+    transition:transform var(--duration-magic) var(--ease-out),box-shadow var(--duration-normal) ease;
+    isolation:isolate;
+  }
+  .category-card::before{
+    position:absolute;inset:.38rem;border:1px double color-mix(in srgb,var(--wine) 48%,transparent);border-radius:var(--radius-sm);content:"";pointer-events:none;
+  }
+  .category-card__shine{
+    position:absolute;inset:0;overflow:hidden;border-radius:inherit;pointer-events:none;
+    background:linear-gradient(115deg,transparent 30%,color-mix(in srgb,var(--gold) 22%,transparent) 46%,transparent 60%);
+    transform:translateX(-130%);
+  }
+  .category-card:hover .category-card__shine{transform:translateX(130%);transition:transform var(--duration-magic) ease}
+  .category-card__sigil{font-size:2.2rem;line-height:1;color:var(--gold)}
+  .category-card__card{margin-top:.4rem;font-size:.68rem;letter-spacing:.22em;text-transform:uppercase;color:var(--wine);opacity:.85}
+  .category-card__name{margin-top:var(--space-3);font-family:var(--font-serif);font-size:clamp(1.15rem,2.4vw,1.5rem);font-weight:700;line-height:1.15}
+  .category-card__zh{color:var(--muted);font-size:.82rem}
+  .category-card__count{margin-top:auto;padding:.15rem .6rem;border:1px solid var(--border-strong);border-radius:var(--radius-pill);color:var(--muted);font-size:.78rem}
+
+  @media(hover:hover){
+    .category-card:hover{transform:rotateX(var(--tilt)) translateY(-.3rem) translateZ(.6rem);box-shadow:.5rem .65rem 0 color-mix(in srgb,var(--wine) 18%,transparent),0 1.4rem 2.4rem rgba(75,37,50,.16)}
+    .category-card:active{transform:rotateX(0) translateY(0) scale(.98)}
+  }
+  .category-card:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+
+  @media(prefers-reduced-motion:reduce){
+    .category-card,.category-card__shine{transition:none!important;transform:none!important}
+  }
+</style>

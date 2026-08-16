@@ -3,7 +3,7 @@ title: 从输入 URL 到页面显示，浏览器经历了什么？
 description: 从 DNS、连接建立、HTTP 请求到浏览器渲染，拆解网页加载全过程，并用 DevTools 实际观察网络请求。
 slug: from-url-to-page-rendering
 published: 2026-08-15
-category: Web 基础
+category: web
 tags: [浏览器, HTTP, DNS, Web]
 draft: false
 featured: false
