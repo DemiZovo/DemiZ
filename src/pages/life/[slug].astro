@@ -2,8 +2,11 @@
 import { render } from 'astro:content';
 import ArticleNavigation from '../../components/ArticleNavigation.astro';
 import ArticleReaderTools from '../../components/ArticleReaderTools.astro';
+import ArticleHeader from '../../components/ArticleHeader.astro';
+import ArticleEnding from '../../components/ArticleEnding.astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getPublicLife } from '../../lib/content';
+import { readingMinutes } from '../../lib/reading';
 import { sitePath } from '../../lib/urls';
 
 export async function getStaticPaths() {
@@ -16,16 +19,26 @@ export async function getStaticPaths() {
 
 const { entry, previous, next } = Astro.props;
 const { Content, headings } = await render(entry);
+const minutes = readingMinutes(entry.body ?? '');
 ---
+
 <BaseLayout title={`${entry.data.title} | 日常手账`} description={entry.data.description} image={entry.data.cover} type="article" publishedTime={entry.data.published} updatedTime={entry.data.updated} tags={entry.data.tags}>
   <div class="article-layout">
     <article class="article" data-article-content>
-      <p><a href={sitePath('/life/')}>← 返回日常手账</a></p>
-      <header class="article-hero article-hero--life"><p class="meta">{entry.data.published.toLocaleDateString('zh-CN')}</p><h1>{entry.data.title}</h1><p>{entry.data.description}</p></header>
+      <p class="article-back"><a href={sitePath('/life/')}>← 日常手账</a></p>
+      <ArticleHeader
+        title={entry.data.title}
+        description={entry.data.description}
+        publishedAt={entry.data.published}
+        minutes={minutes}
+        updatedAt={entry.data.updated}
+        tags={entry.data.tags}
+      />
       <Content />
+      <ArticleEnding seed={entry.data.slug} />
       <ArticleNavigation
-        previous={previous && { title: previous.data.title, path: `/life/${previous.data.slug}/` }}
-        next={next && { title: next.data.title, path: `/life/${next.data.slug}/` }}
+        previous={previous ? { title: previous.data.title, path: `/life/${previous.data.slug}/` } : undefined}
+        next={next ? { title: next.data.title, path: `/life/${next.data.slug}/` } : undefined}
         indexPath="/life/"
         indexLabel="返回日常手账"
       />
@@ -33,3 +46,9 @@ const { Content, headings } = await render(entry);
     <ArticleReaderTools entryKey={`life:${entry.data.slug}`} headings={headings} />
   </div>
 </BaseLayout>
+
+<style>
+  .article-back{margin:0 0 1.5rem}
+  .article-back a{color:var(--muted);text-decoration:none;font-size:.9rem}
+  .article-back a:hover{color:var(--accent)}
+</style>

@@ -1,0 +1,29 @@
+---
+interface Props {
+  /** 用于稳定取一条收尾语，SSR 一致（传 slug 即可）。 */
+  seed: string;
+}
+
+// 收尾语：DemiZ 自己说的话，按 seed 稳定取一条（不随机跳）。
+const endings = [
+  '这篇笔记暂时写到这里。如果以后理解改变，我还会回来修改它。',
+  '先记到这里，等踩到坑或者想得更清楚，再回来补。',
+  '写这篇时的理解是这样，以后可能会变。',
+  '这篇还没有真正写完，但先收进魔法库，日后继续。',
+];
+const { seed } = Astro.props;
+const ending = endings[[...seed].reduce((sum, ch) => sum + ch.codePointAt(0)!, 0) % endings.length];
+---
+
+<footer class="article-ending" aria-label="文章结尾">
+  <p class="article-ending__mark" aria-hidden="true">✦</p>
+  <p class="article-ending__title">收录完成</p>
+  <p class="article-ending__note">{ending}</p>
+</footer>
+
+<style>
+  .article-ending{margin-top:4rem;padding-top:2.5rem;border-top:1px solid var(--border);text-align:center}
+  .article-ending__mark{color:var(--gold);font-size:1.5rem;margin:0}
+  .article-ending__title{font-family:var(--font-serif);font-size:1.1rem;letter-spacing:.08em;color:var(--text);margin:.5rem 0 .75rem}
+  .article-ending__note{color:var(--muted);font-size:.92rem;line-height:1.7;max-width:26rem;margin:0 auto}
+</style>

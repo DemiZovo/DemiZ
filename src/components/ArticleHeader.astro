@@ -1,0 +1,53 @@
+---
+import { sitePath } from '../lib/urls';
+
+interface Props {
+  title: string;
+  description: string;
+  publishedAt: Date;
+  minutes: number;
+  updatedAt?: Date | undefined;
+  /** 分类指示（blog 有，life 无）。href 已含 base。 */
+  category?: { label: string; href: string } | undefined;
+  /** note 状态（仅 blog）。 */
+  status?: string | undefined;
+  tags?: string[];
+}
+
+const { title, description, publishedAt, minutes, updatedAt, category, status, tags = [] } = Astro.props;
+const date = publishedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const updated = updatedAt
+  ? updatedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  : null;
+---
+
+<header class="article-header">
+  {category && <p class="article-header__category"><a href={category.href}>{category.label}</a></p>}
+  <h1>{title}</h1>
+  <p class="article-header__desc">{description}</p>
+  <p class="article-header__meta">
+    <time datetime={publishedAt.toISOString()}>{date}</time>
+    <span aria-hidden="true">·</span>
+    <span>{minutes} min</span>
+    {updated && (<><span aria-hidden="true">·</span><span>Updated {updated}</span></>)}
+  </p>
+  {status && <p class="article-header__status">{status}</p>}
+  {tags.length > 0 && (
+    <ul class="article-header__tags">
+      {tags.map(tag => <li><a href={sitePath(`/tags/${encodeURIComponent(tag)}/`)}>#{tag}</a></li>)}
+    </ul>
+  )}
+</header>
+
+<style>
+  .article-header{margin-bottom:2.5rem}
+  .article-header__category{font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;margin:0 0 .75rem}
+  .article-header__category a{color:var(--accent);text-decoration:none;border-bottom:1px solid color-mix(in srgb,var(--accent) 30%,transparent)}
+  .article-header__category a:hover{border-bottom-color:var(--accent)}
+  .article-header__desc{color:var(--muted);font-size:1.15rem;line-height:1.6;margin:1rem 0}
+  .article-header__meta{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;color:var(--muted);font-size:.9rem;font-variant-numeric:tabular-nums;margin:1.25rem 0 .25rem}
+  .article-header__status{color:var(--muted);font-size:.82rem;margin:.25rem 0 0}
+  .article-header__tags{display:flex;flex-wrap:wrap;gap:.5rem;list-style:none;padding:0;margin:1rem 0 0}
+  .article-header__tags a{color:var(--muted);font-size:.88rem;text-decoration:none;border-bottom:1px solid var(--border-strong)}
+  .article-header__tags a:hover{color:var(--accent);border-bottom-color:var(--accent)}
+</style>
